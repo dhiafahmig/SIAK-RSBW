@@ -1,0 +1,59 @@
+/* Custom styling */
+.auth-page {
+  background: linear-gradient(135deg, #1E40AF 0%, #3B82F6 100%);
+  min-height: 100vh;
+}
+
+.content-wrapper {
+  transition: all 0.3s ease;
+}
+
+/* Card styling */
+.auth-card {
+  background-color: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* Dashboard cards */
+.stat-card {
+  transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* Sidebar styling */
+.sidebar {
+  background-color: #1E40AF;
+  transition: all 0.3s ease;
+}
+
+/* Table styling */
+.table-container th {
+  background-color: #f9fafb;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+  font-size: 0.75rem;
+}
+
+/* Activity feed */
+.activity-item {
+  border-left: 2px solid #e5e7eb;
+  padding-left: 1rem;
+  position: relative;
+}
+
+.activity-item:before {
+  content: '';
+  position: absolute;
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 50%;
+  background-color: #1E40AF;
+  left: -0.4rem;
+  top: 0.25rem;
+} 
