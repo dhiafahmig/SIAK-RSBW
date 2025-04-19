@@ -47,30 +47,48 @@ const Dashboard: React.FC = () => {
   };
 
   return (
-    <Layout username={userData.username} darkMode={darkMode}>
-      <div className="flex flex-col items-center justify-center min-h-[70vh] text-center px-4">
-        <h2 className={`text-3xl font-bold mb-3 ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>
+    <Layout 
+      username={userData.username} 
+      darkMode={darkMode} 
+      onToggleDarkMode={toggleDarkMode}
+    >
+      <div className="flex flex-col items-center justify-center min-h-[70vh] text-center px-4 transform transition-all duration-700 ease-in-out">
+        <h2 className={`text-3xl font-bold mb-3 transition-colors duration-500 ease-in-out transform ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>
           Selamat Datang di Dashboard
         </h2>
-        <p className={`${darkMode ? 'text-gray-400' : 'text-gray-600'} max-w-md mx-auto`}>
+        <p className={`transition-colors duration-500 ease-in-out max-w-md mx-auto ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
           Konten dashboard akan segera hadir
         </p>
         
-        {/* Toggle Dark Mode Button */}
-        <button 
-          onClick={toggleDarkMode}
-          className={`mt-8 p-3 rounded-full ${darkMode ? 'bg-gray-800 text-yellow-300' : 'bg-white text-gray-700'} shadow-md hover:shadow-lg transition-all duration-300`}
-        >
-          {darkMode ? (
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-            </svg>
-          ) : (
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-            </svg>
-          )}
-        </button>
+        {/* Kartu Animasi */}
+        <div className="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full max-w-5xl">
+          {[1, 2, 3].map((item) => (
+            <div 
+              key={item} 
+              className={`p-6 rounded-lg shadow-md transition-all duration-500 transform hover:scale-105 ease-in-out
+                ${darkMode 
+                  ? 'bg-gray-800 text-gray-200 hover:bg-gray-700' 
+                  : 'bg-white text-gray-800 hover:bg-gray-50'
+                }`}
+            >
+              <div className={`w-12 h-12 rounded-full mb-4 flex items-center justify-center transition-colors duration-500
+                ${darkMode ? 'bg-blue-500' : 'bg-blue-600'}`}
+              >
+                <span className="text-white text-xl">{item}</span>
+              </div>
+              <h3 className={`text-xl font-semibold mb-2 transition-colors duration-500 
+                ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}
+              >
+                Fitur {item}
+              </h3>
+              <p className={`transition-colors duration-500 
+                ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}
+              >
+                Deskripsi fitur {item} akan tersedia segera. Tunggu pengembangan selanjutnya.
+              </p>
+            </div>
+          ))}
+        </div>
       </div>
     </Layout>
   );
