@@ -6,6 +6,7 @@ import Sidebar from './Sidebar';
 interface LayoutProps {
   children: React.ReactNode;
   username?: string;
+  name?: string;
   darkMode: boolean;
   onToggleDarkMode: () => void;
 }
@@ -13,6 +14,7 @@ interface LayoutProps {
 const Layout: React.FC<LayoutProps> = ({ 
   children, 
   username = 'User', 
+  name = 'Pengguna',
   darkMode = false,
   onToggleDarkMode 
 }) => {
@@ -51,6 +53,7 @@ const Layout: React.FC<LayoutProps> = ({
     <div className={`flex flex-col min-h-screen transition-colors duration-500 ease-in-out ${darkMode ? 'bg-gray-900' : 'bg-gray-100'}`}>
       <Navbar 
         username={username} 
+        name={name}
         darkMode={darkMode} 
         onToggleDarkMode={onToggleDarkMode}
         toggleSidebar={() => setSidebarOpen(!sidebarOpen)}

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 
 interface NavbarProps {
   username?: string;
+  name?: string;
   darkMode: boolean;
   onToggleDarkMode: () => void;
   toggleSidebar: () => void;
@@ -12,6 +13,7 @@ interface NavbarProps {
 
 const Navbar: React.FC<NavbarProps> = ({ 
   username = 'User', 
+  name = 'Pengguna',
   darkMode, 
   onToggleDarkMode, 
   toggleSidebar, 
@@ -85,9 +87,9 @@ const Navbar: React.FC<NavbarProps> = ({
                 className={`flex items-center space-x-2 py-1 px-2 rounded ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-800'} transition-colors duration-200`}
               >
                 <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center">
-                  <span className="text-sm font-bold">{username.slice(0, 1).toUpperCase()}</span>
+                  <span className="text-sm font-bold">{name.slice(0, 1).toUpperCase()}</span>
                 </div>
-                <span>Halo, {username}</span>
+                <span>Halo, {name}</span>
                 <svg xmlns="http://www.w3.org/2000/svg" className={`h-4 w-4 transition-transform duration-200 ${dropdownOpen ? 'transform rotate-180' : ''}`} viewBox="0 0 20 20" fill="currentColor">
                   <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
                 </svg>
@@ -102,7 +104,11 @@ const Navbar: React.FC<NavbarProps> = ({
                       <tbody>
                         <tr>
                           <td className="py-2 text-gray-400">Nama</td>
-                          <td className="py-2 text-white font-medium">{username}</td>
+                          <td className="py-2 text-white font-medium">{name}</td>
+                        </tr>
+                        <tr>
+                          <td className="py-2 text-gray-400">Username</td>
+                          <td className="py-2 text-white">{username}</td>
                         </tr>
                         <tr>
                           <td className="py-2 text-gray-400">Role</td>

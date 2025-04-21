@@ -6,6 +6,7 @@ const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const [userData, setUserData] = useState({
     username: 'admin',
+    name: 'Administrator',
     role: '',
   });
   const [darkMode, setDarkMode] = useState(false);
@@ -22,6 +23,7 @@ const Dashboard: React.FC = () => {
       const user = JSON.parse(userStr);
       setUserData({
         username: user.username || 'admin',
+        name: user.name || 'Administrator',
         role: user.role || '',
       });
     } catch (error) {
@@ -49,6 +51,7 @@ const Dashboard: React.FC = () => {
   return (
     <Layout 
       username={userData.username} 
+      name={userData.name}
       darkMode={darkMode} 
       onToggleDarkMode={toggleDarkMode}
     >

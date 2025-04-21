@@ -85,6 +85,8 @@ const Login: React.FC = () => {
       localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(data.user));
       
+      console.log('Login berhasil, data pengguna:', data.user);
+      
       // Redirect ke dashboard
       navigate('/');
     } catch (err: any) {
