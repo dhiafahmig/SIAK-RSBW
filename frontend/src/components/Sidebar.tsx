@@ -118,14 +118,14 @@ const Sidebar: React.FC<SidebarProps> = ({ darkMode, isOpen }) => {
       className={`
         fixed left-0 top-16 h-[calc(100vh-4rem)] z-20
         transition-all duration-500 ease-in-out
-        ${isOpen ? 'w-64' : 'w-0 md:w-0'}
+        ${isOpen ? 'w-64' : 'w-0'}
         ${darkMode ? 'bg-gray-800' : 'bg-gray-900'}
         shadow-xl overflow-hidden
       `}
       aria-hidden={!isOpen}
     >
       {/* Inner content yang tidak akan terlipat */}
-      <div className="w-64 h-full overflow-y-auto text-gray-200">
+      <div className={`w-64 h-full overflow-y-auto text-gray-200 ${isOpen ? 'opacity-100' : 'opacity-0'} transition-opacity duration-300`}>
         <div className="px-6 py-4 border-b border-gray-700 transition-colors duration-500 ease-in-out h-16 flex items-center justify-center">
           <span className={`text-lg font-bold transition-colors duration-500 ease-in-out ${
             darkMode ? 'text-blue-400' : 'text-blue-400'

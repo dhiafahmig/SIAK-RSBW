@@ -264,7 +264,6 @@ const Login: React.FC = () => {
         {/* Footer dengan transisi */}
         <div className={`mt-6 text-center text-sm ${darkMode ? 'text-gray-300' : 'text-gray-700'} text-shadow-sm`}>
           <p>© {new Date().getFullYear()} SIAK-RSBW. Semua hak dilindungi.</p>
-          <p className="mt-1">Hubungi administrator untuk bantuan.</p>
         </div>
       </div>
     </div>

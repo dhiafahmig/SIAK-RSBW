@@ -5,9 +5,13 @@ import (
 	"net/http"
 	"siak-rsbw/backend/handlers"
 	"siak-rsbw/backend/middleware"
+	"siak-rsbw/backend/utils"
 )
 
 func main() {
+	// Inisialisasi koneksi database
+	utils.InitDatabase()
+
 	// Konfigurasi server
 	port := "8080"
 
@@ -17,8 +21,17 @@ func main() {
 	// Menambahkan CORS middleware ke semua routes
 	handler := middleware.EnableCORS(mux)
 
+	// Route untuk endpoint diagnostik
+	mux.HandleFunc("/api/health", handlers.HealthCheckHandler)
+
+	// Route untuk memperbaiki database
+	mux.HandleFunc("/api/fix-database", handlers.FixDatabaseHandler)
+
 	// Route untuk login
 	mux.HandleFunc("/api/auth/login", handlers.LoginHandler)
+
+	// Route untuk registrasi
+	mux.HandleFunc("/api/auth/register", handlers.RegisterHandler)
 
 	// Route yang diproteksi
 	mux.HandleFunc("/api/profile", middleware.AuthMiddleware(handlers.ProfileHandler))

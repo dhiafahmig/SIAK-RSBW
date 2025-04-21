@@ -1,53 +1,63 @@
 package models
 
-// User merepresentasikan model pengguna
+import (
+	"time"
+
+	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
+)
+
+// User merepresentasikan model pengguna dalam database
 type User struct {
-	ID       string `json:"id"`
-	Username string `json:"username"`
-	Password string `json:"-"` // Tidak dikembalikan dalam JSON
-	Role     string `json:"role"`
-	Name     string `json:"name"`
+	ID        uint      `json:"id" gorm:"primaryKey"`
+	Username  string    `json:"username" gorm:"uniqueIndex;not null"`
+	Password  string    `json:"-" gorm:"not null"` // "-" berarti tidak dikembalikan dalam JSON
+	Role      string    `json:"role" gorm:"default:user"`
+	Name      string    `json:"name"`
+	CreatedAt time.Time `json:"created_at" gorm:"autoCreateTime"`
+	UpdatedAt time.Time `json:"updated_at" gorm:"autoUpdateTime"`
 }
 
-// Untuk demo, buat daftar pengguna statis
-// Pada implementasi nyata, ini akan diambil dari database
-var users = []User{
-	{
-		ID:       "1",
-		Username: "admin",
-		// Dalam implementasi sebenarnya, password harus di-hash
-		// Ini hanya contoh untuk demo
-		Password: "admin123",
-		Role:     "admin",
-		Name:     "Administrator",
-	},
+// CheckPassword membandingkan password yang diberikan dengan password yang tersimpan
+func (u *User) CheckPassword(password string) error {
+	return bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(password))
 }
 
-// FindUserByUsername mencari pengguna berdasarkan username
-func FindUserByUsername(username string) *User {
-	for _, user := range users {
-		if user.Username == username {
-			return &user
-		}
+// SetPassword menghash dan menyimpan password untuk user
+func (u *User) SetPassword(password string) error {
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return err
 	}
+	u.Password = string(hashedPassword)
 	return nil
 }
 
-// FindUserByID mencari pengguna berdasarkan ID
-func FindUserByID(id string) *User {
-	for _, user := range users {
-		if user.ID == id {
-			return &user
-		}
-	}
-	return nil
+// FindUserByUsername mencari user berdasarkan username
+func FindUserByUsername(db *gorm.DB, username string) (*User, error) {
+	var user User
+	result := db.Where("username = ?", username).First(&user)
+	return &user, result.Error
 }
 
-// ValidateCredentials validasi username dan password
-func ValidateCredentials(username, password string) *User {
-	user := FindUserByUsername(username)
-	if user != nil && user.Password == password {
-		return user
+// FindUserByID mencari user berdasarkan ID
+func FindUserByID(db *gorm.DB, id uint) (*User, error) {
+	var user User
+	result := db.Where("id = ?", id).First(&user)
+	return &user, result.Error
+}
+
+// ValidateCredentials memvalidasi username dan password
+func ValidateCredentials(db *gorm.DB, username, password string) (*User, error) {
+	user, err := FindUserByUsername(db, username)
+	if err != nil {
+		return nil, err
 	}
-	return nil
+
+	err = user.CheckPassword(password)
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
 }

@@ -55,6 +55,7 @@ const Layout: React.FC<LayoutProps> = ({
         onToggleDarkMode={onToggleDarkMode}
         toggleSidebar={() => setSidebarOpen(!sidebarOpen)}
         sidebarOpen={sidebarOpen}
+        role="admin"
       />
       
       <div className="flex flex-grow pt-16">
@@ -70,6 +71,7 @@ const Layout: React.FC<LayoutProps> = ({
             flex-grow transition-all duration-500 ease-in-out 
             ${darkMode ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-800'}
             ${sidebarOpen ? 'md:ml-64' : 'ml-0'}
+            w-full
           `}
         >
           <div className="container mx-auto px-4 py-8 transition-all duration-500 ease-in-out">
