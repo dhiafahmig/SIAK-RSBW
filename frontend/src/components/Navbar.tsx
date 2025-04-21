@@ -95,48 +95,49 @@ const Navbar: React.FC<NavbarProps> = ({
                 </svg>
               </button>
               
-              {dropdownOpen && (
-                <div className={`absolute right-0 mt-2 w-64 rounded-md shadow-lg ${darkMode ? 'bg-gray-800' : 'bg-gray-900'} border border-gray-700 z-50`}>
-                  <div className="p-4">
-                    <h3 className="text-lg font-medium text-blue-400 border-b border-gray-700 pb-2">Informasi Pengguna</h3>
-                    
-                    <table className="w-full mt-3 text-sm">
-                      <tbody>
-                        <tr>
-                          <td className="py-2 text-gray-400">Nama</td>
-                          <td className="py-2 text-white font-medium">{name}</td>
-                        </tr>
-                        <tr>
-                          <td className="py-2 text-gray-400">Username</td>
-                          <td className="py-2 text-white">{username}</td>
-                        </tr>
-                        <tr>
-                          <td className="py-2 text-gray-400">Role</td>
-                          <td className="py-2">
-                            <span className={`px-2 py-1 rounded-full text-xs ${
-                              role === 'admin' ? 'bg-red-900 text-red-200' : 'bg-blue-900 text-blue-200'
-                            }`}>
-                              {role}
-                            </span>
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
-                    
-                    <div className="mt-4 pt-2 border-t border-gray-700">
-                      <button 
-                        onClick={handleLogout}
-                        className="w-full flex items-center justify-between p-2 mt-2 rounded hover:bg-gray-700 transition-colors text-red-400 hover:text-red-300"
-                      >
-                        <span className="font-medium">Logout</span>
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 001 1h12a1 1 0 001-1V7.414l-5-5H3zm7 2a1 1 0 000 2h1a1 1 0 100-2h-1zm-2 5a1 1 0 100 2h5a1 1 0 100-2h-5zm0 4a1 1 0 100 2h1a1 1 0 100-2h-1z" clipRule="evenodd" />
-                        </svg>
-                      </button>
-                    </div>
+              {/* Dropdown Menu dengan transisi */}
+              <div 
+                className={`absolute right-0 mt-2 w-64 rounded-md shadow-lg ${darkMode ? 'bg-gray-800' : 'bg-gray-900'} border border-gray-700 z-50 transform transition-all duration-300 origin-top-right ${dropdownOpen ? 'scale-100 opacity-100' : 'scale-95 opacity-0 pointer-events-none'}`}
+              >
+                <div className="p-4">
+                  <h3 className="text-lg font-medium text-blue-400 border-b border-gray-700 pb-2">Informasi Pengguna</h3>
+                  
+                  <table className="w-full mt-3 text-sm">
+                    <tbody>
+                      <tr>
+                        <td className="py-2 text-gray-400">Nama</td>
+                        <td className="py-2 text-white font-medium">{name}</td>
+                      </tr>
+                      <tr>
+                        <td className="py-2 text-gray-400">Username</td>
+                        <td className="py-2 text-white">{username}</td>
+                      </tr>
+                      <tr>
+                        <td className="py-2 text-gray-400">Role</td>
+                        <td className="py-2">
+                          <span className={`px-2 py-1 rounded-full text-xs ${
+                            role === 'admin' ? 'bg-red-900 text-red-200' : 'bg-blue-900 text-blue-200'
+                          }`}>
+                            {role}
+                          </span>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                  
+                  <div className="mt-4 pt-2 border-t border-gray-700">
+                    <button 
+                      onClick={handleLogout}
+                      className="w-full flex items-center justify-between p-2 mt-2 rounded hover:bg-gray-700 transition-colors text-red-400 hover:text-red-300"
+                    >
+                      <span className="font-medium">Logout</span>
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 001 1h12a1 1 0 001-1V7.414l-5-5H3zm7 2a1 1 0 000 2h1a1 1 0 100-2h-1zm-2 5a1 1 0 100 2h5a1 1 0 100-2h-5zm0 4a1 1 0 100 2h1a1 1 0 100-2h-1z" clipRule="evenodd" />
+                      </svg>
+                    </button>
                   </div>
                 </div>
-              )}
+              </div>
             </div>
           </div>
         </div>

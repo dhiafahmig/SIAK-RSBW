@@ -50,8 +50,8 @@ const Dashboard: React.FC = () => {
 
   return (
     <Layout 
-      username={userData.username} 
-      name={userData.name}
+      username={userData.username}
+      name={userData.name} 
       darkMode={darkMode} 
       onToggleDarkMode={toggleDarkMode}
     >
