@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
 import axios from 'axios';
+import { toggleDarkMode, getCurrentTheme } from '../utils/theme';
 
 // API URL
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080';
@@ -14,8 +15,13 @@ const Dashboard: React.FC = () => {
     name: 'Administrator',
     role: '',
   });
-  const [darkMode, setDarkMode] = useState(false);
+  
+  // Set nilai awal darkMode dari utilitas
+  const [darkMode, setDarkMode] = useState(getCurrentTheme);
+  
   const [loading, setLoading] = useState(true);
+  const [enableTransitions, setEnableTransitions] = useState(false);
+  const initialMountCompleted = useRef(false);
 
   // Cek jika user belum login, redirect ke halaman login
   useEffect(() => {
@@ -56,33 +62,63 @@ const Dashboard: React.FC = () => {
       });
 
       // Set dark mode dari hasil response
-      setDarkMode(response.data.dark_mode);
+      const serverDarkMode = response.data.dark_mode;
       
-      // Simpan juga di localStorage sebagai fallback
-      localStorage.setItem('darkMode', JSON.stringify(response.data.dark_mode));
+      // Hanya update jika berbeda dengan nilai saat ini untuk menghindari re-render yang tidak perlu
+      if (serverDarkMode !== darkMode) {
+        setDarkMode(serverDarkMode);
+      }
+      
+      // Simpan juga di localStorage dan update DOM
+      toggleDarkMode(serverDarkMode);
     } catch (error) {
       console.error('Error fetching dark mode preference:', error);
-      
-      // Fallback ke localStorage jika API gagal
-      const savedDarkMode = localStorage.getItem('darkMode');
-      if (savedDarkMode) {
-        setDarkMode(JSON.parse(savedDarkMode));
-      }
+      // Tidak perlu fallback ke localStorage karena sudah diatur di useState initializer
     } finally {
       setLoading(false);
     }
   };
 
-  // Simpan preferensi tema
+  // Menangani perubahan tema dan transisi
   useEffect(() => {
-    if (loading) return; // Jangan update saat masih loading
-
-    document.documentElement.classList.toggle('dark', darkMode);
-    localStorage.setItem('darkMode', JSON.stringify(darkMode));
-
-    // Update preferensi di database jika user sudah login
-    updateDarkModePreference();
-  }, [darkMode]);
+    if (loading) return; // Tidak update selama loading
+    
+    if (!initialMountCompleted.current) {
+      // Saat initial mount, atur tema tanpa transisi
+      document.documentElement.classList.remove('transition-colors', 'duration-500');
+      
+      // Tandai initial mount sebagai selesai
+      initialMountCompleted.current = true;
+      
+      // Aktifkan transisi untuk perubahan selanjutnya (setelah delay)
+      const timer = setTimeout(() => {
+        setEnableTransitions(true);
+      }, 300);
+      
+      return () => clearTimeout(timer);
+    } else {
+      // Untuk perubahan selanjutnya, tangani transisi
+      if (enableTransitions) {
+        // Tambahkan kelas transisi
+        document.documentElement.classList.add('transition-colors', 'duration-500');
+      }
+      
+      // Update tema menggunakan utilitas
+      toggleDarkMode(darkMode);
+      
+      // Update preferensi di database
+      updateDarkModePreference();
+      
+      // Hapus kelas transisi setelah transisi selesai
+      if (enableTransitions) {
+        const transitionTimeout = setTimeout(() => {
+          document.documentElement.classList.remove('transition-colors', 'duration-500');
+        }, 600);
+        
+        return () => clearTimeout(transitionTimeout);
+      }
+    }
+  }, [darkMode, loading, enableTransitions]);
 
   // Fungsi untuk mengupdate preferensi dark mode ke server
   const updateDarkModePreference = async () => {
@@ -104,8 +140,8 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  const toggleDarkMode = () => {
-    setDarkMode(prev => !prev);
+  const toggleTheme = () => {
+    setDarkMode((prev: boolean) => !prev);
   };
 
   return (
@@ -113,13 +149,14 @@ const Dashboard: React.FC = () => {
       username={userData.username}
       name={userData.name} 
       darkMode={darkMode} 
-      onToggleDarkMode={toggleDarkMode}
+      onToggleDarkMode={toggleTheme}
+      enableTransitions={enableTransitions}
     >
-      <div className="flex flex-col items-center justify-center min-h-[70vh] text-center px-4 transform transition-all duration-700 ease-in-out">
-        <h2 className={`text-3xl font-bold mb-3 transition-colors duration-500 ease-in-out transform ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>
+      <div className="flex flex-col items-center justify-center min-h-[70vh] text-center px-4 transform">
+        <h2 className={`text-3xl font-bold mb-3 ${enableTransitions ? "transition-colors duration-500 ease-in-out transform" : ""} ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>
           Selamat Datang di Dashboard
         </h2>
-        <p className={`transition-colors duration-500 ease-in-out max-w-md mx-auto ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+        <p className={`${enableTransitions ? "transition-colors duration-500 ease-in-out" : ""} max-w-md mx-auto ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
           Konten dashboard akan segera hadir
         </p>
         
@@ -128,23 +165,23 @@ const Dashboard: React.FC = () => {
           {[1, 2, 3].map((item) => (
             <div 
               key={item} 
-              className={`p-6 rounded-lg shadow-md transition-all duration-500 transform hover:scale-105 ease-in-out
+              className={`p-6 rounded-lg shadow-md ${enableTransitions ? "transition-all duration-500" : ""} transform hover:scale-105 ease-in-out
                 ${darkMode 
                   ? 'bg-gray-800 text-gray-200 hover:bg-gray-700' 
                   : 'bg-white text-gray-800 hover:bg-gray-50'
                 }`}
             >
-              <div className={`w-12 h-12 rounded-full mb-4 flex items-center justify-center transition-colors duration-500
+              <div className={`w-12 h-12 rounded-full mb-4 flex items-center justify-center ${enableTransitions ? "transition-colors duration-500" : ""}
                 ${darkMode ? 'bg-blue-500' : 'bg-blue-600'}`}
               >
                 <span className="text-white text-xl">{item}</span>
               </div>
-              <h3 className={`text-xl font-semibold mb-2 transition-colors duration-500 
+              <h3 className={`text-xl font-semibold mb-2 ${enableTransitions ? "transition-colors duration-500" : ""}
                 ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}
               >
                 Fitur {item}
               </h3>
-              <p className={`transition-colors duration-500 
+              <p className={`${enableTransitions ? "transition-colors duration-500" : ""}
                 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}
               >
                 Deskripsi fitur {item} akan tersedia segera. Tunggu pengembangan selanjutnya.

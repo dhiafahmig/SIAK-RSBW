@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { toggleDarkMode, getCurrentTheme } from '../utils/theme';
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
@@ -10,27 +11,55 @@ const Login: React.FC = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showNotification, setShowNotification] = useState(false);
+  const initialMountCompleted = useRef(false);
+  const [enableTransitions, setEnableTransitions] = useState(false);
+  
+  // Menggunakan nilai awal dari utilitas tema
   const [darkMode, setDarkMode] = useState(() => {
-    // Cek preferensi sistem atau pengaturan sebelumnya dari localStorage
-    const savedMode = localStorage.getItem('darkMode');
-    return savedMode ? JSON.parse(savedMode) : window.matchMedia('(prefers-color-scheme: dark)').matches;
+    // Baca preference dark mode dari sistem jika tidak ada di localStorage
+    const savedTheme = getCurrentTheme();
+    const systemPreference = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    return savedTheme || systemPreference;
   });
 
-  // Tambahkan useEffect untuk mengatur transisi pada body/html
+  // useEffect untuk mengatur tema
   useEffect(() => {
-    // Tambahkan class transition ke html element
-    document.documentElement.classList.add('transition-colors', 'duration-500');
-    document.documentElement.classList.toggle('dark', darkMode);
-    localStorage.setItem('darkMode', JSON.stringify(darkMode));
-    
-    return () => {
-      // Optional: bersihkan class transisi saat komponen unmount
+    if (!initialMountCompleted.current) {
+      // Saat pertama kali mount, terapkan tema tanpa transisi
       document.documentElement.classList.remove('transition-colors', 'duration-500');
-    };
-  }, [darkMode]);
+      
+      // Tandai initial mount sebagai selesai
+      initialMountCompleted.current = true;
+      
+      // Aktifkan transisi setelah delay untuk mencegah animasi yang tidak diinginkan
+      const timer = setTimeout(() => {
+        setEnableTransitions(true);
+      }, 300);
+      
+      return () => clearTimeout(timer);
+    } else {
+      // Untuk perubahan tema selanjutnya
+      if (enableTransitions) {
+        // Tambahkan kelas transisi
+        document.documentElement.classList.add('transition-colors', 'duration-500');
+      }
+      
+      // Update tema menggunakan utilitas
+      toggleDarkMode(darkMode);
+      
+      // Hapus kelas transisi setelah transisi selesai
+      if (enableTransitions) {
+        const transitionTimeout = setTimeout(() => {
+          document.documentElement.classList.remove('transition-colors', 'duration-500');
+        }, 600);
+        
+        return () => clearTimeout(transitionTimeout);
+      }
+    }
+  }, [darkMode, enableTransitions]);
 
-  const toggleDarkMode = () => {
-    setDarkMode(!darkMode);
+  const toggleTheme = () => {
+    setDarkMode((prev: boolean) => !prev);
   };
 
   // Cek jika user sudah login, redirect ke dashboard
@@ -119,8 +148,8 @@ const Login: React.FC = () => {
 
       {/* Toggle Dark Mode dengan transisi */}
       <button 
-        onClick={toggleDarkMode}
-        className={`absolute top-4 right-4 p-2 rounded-full transition-all duration-500 ${
+        onClick={toggleTheme}
+        className={`absolute top-4 right-4 p-2 rounded-full ${enableTransitions ? "transition-all duration-500" : ""} ${
           darkMode 
             ? 'bg-gray-800 text-yellow-300 hover:bg-gray-700' 
             : 'bg-white text-gray-700 hover:bg-gray-100'
@@ -128,11 +157,11 @@ const Login: React.FC = () => {
         aria-label={darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
       >
         {darkMode ? (
-          <svg className="w-6 h-6 transition-transform duration-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className={`w-6 h-6 ${enableTransitions ? "transition-transform duration-500" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
           </svg>
         ) : (
-          <svg className="w-6 h-6 transition-transform duration-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className={`w-6 h-6 ${enableTransitions ? "transition-transform duration-500" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
           </svg>
         )}
@@ -167,11 +196,11 @@ const Login: React.FC = () => {
               />
             </div>
           </div>
-          <h2 className={`text-3xl font-extrabold transition-colors duration-500 ${darkMode ? 'text-white' : 'text-gray-800'} mb-2 text-shadow`}>SIAK-RSBW</h2>
+          <h2 className={`text-3xl font-extrabold ${enableTransitions ? "transition-colors duration-500" : ""} ${darkMode ? 'text-white' : 'text-gray-800'} mb-2 text-shadow`}>SIAK-RSBW</h2>
         </div>
         
         {/* Form Login dengan transisi dan efek glass */}
-        <div className={`backdrop-filter backdrop-blur-md transition-all duration-500 ${
+        <div className={`backdrop-filter backdrop-blur-md ${enableTransitions ? "transition-all duration-500" : ""} ${
           darkMode 
             ? 'bg-gray-800 bg-opacity-75 text-white' 
             : 'bg-white bg-opacity-85 text-gray-800'
@@ -197,7 +226,7 @@ const Login: React.FC = () => {
                   type="text"
                   autoComplete="username"
                   required
-                  className={`pl-10 block w-full px-3 py-3 border transition-colors duration-500 ${darkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400'} rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary`}
+                  className={`pl-10 block w-full px-3 py-3 border ${enableTransitions ? "transition-colors duration-500" : ""} ${darkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400'} rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary`}
                   value={formData.username}
                   onChange={handleChange}
                   placeholder="Masukkan username"
@@ -221,7 +250,7 @@ const Login: React.FC = () => {
                   type="password"
                   autoComplete="current-password"
                   required
-                  className={`pl-10 block w-full px-3 py-3 border transition-colors duration-500 ${darkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400'} rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary`}
+                  className={`pl-10 block w-full px-3 py-3 border ${enableTransitions ? "transition-colors duration-500" : ""} ${darkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400'} rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary`}
                   value={formData.password}
                   onChange={handleChange}
                   placeholder="Masukkan password"
@@ -268,7 +297,7 @@ const Login: React.FC = () => {
         </div>
         
         {/* Footer dengan transisi */}
-        <div className={`mt-6 text-center text-sm ${darkMode ? 'text-gray-300' : 'text-gray-700'} text-shadow-sm`}>
+        <div className={`mt-6 text-center text-sm ${enableTransitions ? "transition-colors duration-300" : ""} ${darkMode ? 'text-gray-300' : 'text-gray-700'} text-shadow-sm`}>
           <p>© {new Date().getFullYear()} SIAK-RSBW. Semua hak dilindungi.</p>
         </div>
       </div>

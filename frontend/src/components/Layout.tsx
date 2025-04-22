@@ -9,6 +9,7 @@ interface LayoutProps {
   name?: string;
   darkMode: boolean;
   onToggleDarkMode: () => void;
+  enableTransitions?: boolean;
 }
 
 const Layout: React.FC<LayoutProps> = ({ 
@@ -16,20 +17,11 @@ const Layout: React.FC<LayoutProps> = ({
   username = 'User', 
   name = 'Pengguna',
   darkMode = false,
-  onToggleDarkMode 
+  onToggleDarkMode,
+  enableTransitions = false
 }) => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   
-  // Menambahkan kelas transisi ke root HTML pada komponen mount
-  useEffect(() => {
-    document.documentElement.classList.add('transition-colors', 'duration-500');
-    
-    // Cleanup saat unmount (opsional)
-    return () => {
-      document.documentElement.classList.remove('transition-colors', 'duration-500');
-    };
-  }, []);
-
   // Tutup sidebar otomatis pada layar kecil
   useEffect(() => {
     const handleResize = () => {
@@ -49,8 +41,11 @@ const Layout: React.FC<LayoutProps> = ({
     };
   }, []);
   
+  // Kelas transisi kondisional berdasarkan enableTransitions
+  const transitionClass = enableTransitions ? "transition-colors duration-500 ease-in-out" : "";
+  
   return (
-    <div className={`flex flex-col min-h-screen transition-colors duration-500 ease-in-out ${darkMode ? 'bg-gray-900' : 'bg-gray-100'}`}>
+    <div className={`flex flex-col min-h-screen ${transitionClass} ${darkMode ? 'bg-gray-900' : 'bg-gray-100'}`}>
       <Navbar 
         username={username} 
         name={name}
@@ -71,19 +66,19 @@ const Layout: React.FC<LayoutProps> = ({
         {/* Main Content */}
         <main 
           className={`
-            flex-grow transition-all duration-500 ease-in-out 
+            flex-grow ${enableTransitions ? "transition-all duration-500 ease-in-out" : ""} 
             ${darkMode ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-800'}
             ${sidebarOpen ? 'md:ml-64' : 'ml-0'}
             w-full
           `}
         >
-          <div className="container mx-auto px-4 py-8 transition-all duration-500 ease-in-out">
+          <div className={`container mx-auto px-4 py-8 ${enableTransitions ? "transition-all duration-500 ease-in-out" : ""}`}>
             {children}
           </div>
         </main>
       </div>
       
-      <div className={`${sidebarOpen ? 'md:ml-64' : 'ml-0'} transition-all duration-500`}>
+      <div className={`${sidebarOpen ? 'md:ml-64' : 'ml-0'} ${enableTransitions ? "transition-all duration-500" : ""}`}>
         <Footer darkMode={darkMode} />
       </div>
     </div>
