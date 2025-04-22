@@ -4,6 +4,7 @@ import Dashboard from './pages/Dashboard';
 import Login from './pages/Login';
 import UserList from './pages/UserList';
 import AddUser from './pages/AddUser';
+import EditProfile from './pages/EditProfile';
 
 // Komponen ProtectedRoute untuk mengecek autentikasi
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -44,6 +45,16 @@ function App() {
           element={
             <ProtectedRoute>
               <AddUser />
+            </ProtectedRoute>
+          } 
+        />
+        
+        {/* Rute Profil */}
+        <Route 
+          path="/profile/edit" 
+          element={
+            <ProtectedRoute>
+              <EditProfile />
             </ProtectedRoute>
           } 
         />

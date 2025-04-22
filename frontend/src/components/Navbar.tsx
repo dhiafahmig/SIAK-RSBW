@@ -124,6 +124,16 @@ const Navbar: React.FC<NavbarProps> = ({
                   
                   <div className="mt-4 pt-2 border-t border-gray-700">
                     <button 
+                      onClick={() => navigate('/profile/edit')}
+                      className="w-full flex items-center justify-between p-2 rounded hover:bg-gray-700 transition-colors text-blue-400 hover:text-blue-300"
+                    >
+                      <span className="font-medium">Edit Profil</span>
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      </svg>
+                    </button>
+                    
+                    <button 
                       onClick={handleLogout}
                       className="w-full flex items-center justify-between p-2 mt-2 rounded hover:bg-gray-700 transition-colors text-red-400 hover:text-red-300"
                     >
