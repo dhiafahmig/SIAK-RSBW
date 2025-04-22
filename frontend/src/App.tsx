@@ -2,8 +2,8 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Dashboard from './pages/Dashboard';
 import Login from './pages/Login';
-import Navbar from './components/Navbar';
-import Footer from './components/Footer';
+import UserList from './pages/UserList';
+import AddUser from './pages/AddUser';
 
 // Komponen ProtectedRoute untuk mengecek autentikasi
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -29,6 +29,25 @@ function App() {
             </ProtectedRoute>
           } 
         />
+        
+        {/* Rute Pengguna */}
+        <Route 
+          path="/pengguna/list" 
+          element={
+            <ProtectedRoute>
+              <UserList />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/pengguna/tambah" 
+          element={
+            <ProtectedRoute>
+              <AddUser />
+            </ProtectedRoute>
+          } 
+        />
+        
         <Route path="*" element={<Navigate to="/login" />} />
       </Routes>
     </BrowserRouter>

@@ -25,16 +25,18 @@ func AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 		}
 
 		// Validasi token
-		userID, err := utils.ValidateJWT(parts[1])
+		tokenData, err := utils.ValidateJWTWithData(parts[1])
 		if err != nil {
 			http.Error(w, "Token tidak valid: "+err.Error(), http.StatusUnauthorized)
 			return
 		}
 
-		// Buat context baru dengan userID
-		ctx := context.WithValue(r.Context(), "userID", userID)
+		// Buat context baru dengan userID dan userRole
+		ctx := context.WithValue(r.Context(), "userID", tokenData.UserID)
+		ctx = context.WithValue(ctx, "userRole", tokenData.Role)
+		ctx = context.WithValue(ctx, "username", tokenData.Username)
 
-		// Lanjutkan dengan request yang memiliki context userID
+		// Lanjutkan dengan request yang memiliki context baru
 		next(w, r.WithContext(ctx))
 	}
 }

@@ -40,6 +40,32 @@ func main() {
 	mux.HandleFunc("/api/user/settings", middleware.AuthMiddleware(handlers.GetUserSettingsHandler))
 	mux.HandleFunc("/api/user/settings/dark-mode", middleware.AuthMiddleware(handlers.UpdateDarkModeHandler))
 
+	// Route untuk manajemen pengguna: GET (list) dan POST (create)
+	mux.HandleFunc("/api/users", middleware.AuthMiddleware(func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodGet:
+			handlers.GetUsersHandler(w, r)
+		case http.MethodPost:
+			handlers.CreateUserHandler(w, r)
+		default:
+			http.Error(w, "Metode tidak diizinkan", http.StatusMethodNotAllowed)
+		}
+	}))
+
+	// Route untuk manajemen pengguna: GET (single), PUT (update), DELETE
+	mux.HandleFunc("/api/users/", middleware.AuthMiddleware(func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodGet:
+			handlers.GetUserHandler(w, r)
+		case http.MethodPut:
+			handlers.UpdateUserHandler(w, r)
+		case http.MethodDelete:
+			handlers.DeleteUserHandler(w, r)
+		default:
+			http.Error(w, "Metode tidak diizinkan", http.StatusMethodNotAllowed)
+		}
+	}))
+
 	// Informasi server
 	log.Printf("Server berjalan di http://localhost:%s", port)
 
