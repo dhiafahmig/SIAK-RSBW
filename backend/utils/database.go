@@ -45,10 +45,12 @@ func InitDatabase() {
 	DB = db
 
 	// Auto migrate schema database (membuat tabel secara otomatis)
+	log.Println("Menjalankan auto migrate untuk model User...")
 	err = DB.AutoMigrate(&models.User{})
 	if err != nil {
 		log.Fatalf("Gagal melakukan auto migrate: %v", err)
 	}
+	log.Println("Auto migrate berhasil")
 
 	// Buat user admin default jika belum ada
 	err = CreateDefaultAdminIfNotExists()
@@ -74,6 +76,7 @@ func CreateDefaultAdminIfNotExists() error {
 			Password: string(hashedPassword),
 			Role:     "admin",
 			Name:     "Administrator",
+			DarkMode: false, // Default light mode
 		}
 
 		result := DB.Create(&admin)
@@ -96,6 +99,11 @@ func getEnv(key, defaultValue string) string {
 		return value
 	}
 	return defaultValue
+}
+
+// GetDB mengembalikan instance database yang telah diinisialisasi
+func GetDB() *gorm.DB {
+	return DB
 }
 
 // CloseDatabase menutup koneksi database

@@ -14,6 +14,7 @@ type User struct {
 	Password  string    `json:"-" gorm:"not null"` // "-" berarti tidak dikembalikan dalam JSON
 	Role      string    `json:"role" gorm:"default:user"`
 	Name      string    `json:"name"`
+	DarkMode  bool      `json:"dark_mode" gorm:"default:false"`
 	CreatedAt time.Time `json:"created_at" gorm:"autoCreateTime"`
 	UpdatedAt time.Time `json:"updated_at" gorm:"autoUpdateTime"`
 }

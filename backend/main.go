@@ -36,6 +36,10 @@ func main() {
 	// Route yang diproteksi
 	mux.HandleFunc("/api/profile", middleware.AuthMiddleware(handlers.ProfileHandler))
 
+	// Route untuk pengaturan pengguna
+	mux.HandleFunc("/api/user/settings", middleware.AuthMiddleware(handlers.GetUserSettingsHandler))
+	mux.HandleFunc("/api/user/settings/dark-mode", middleware.AuthMiddleware(handlers.UpdateDarkModeHandler))
+
 	// Informasi server
 	log.Printf("Server berjalan di http://localhost:%s", port)
 

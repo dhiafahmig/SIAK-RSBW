@@ -55,9 +55,6 @@ const Navbar: React.FC<NavbarProps> = ({
             <span className={`text-xl font-bold ${darkMode ? 'text-blue-400' : 'text-blue-400'}`}>SIAK-RSBW</span>
           </div>
           
-          <div className="hidden md:flex items-center space-x-6">
-            <span className="font-medium">Dashboard</span>
-          </div>
           
           <div className="flex items-center space-x-4">
             <div className="flex items-center">

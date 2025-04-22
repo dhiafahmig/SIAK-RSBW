@@ -85,6 +85,12 @@ const Login: React.FC = () => {
       localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(data.user));
       
+      // Atur dark mode sesuai preferensi pengguna jika tersedia di respons API
+      if (data.user && data.user.dark_mode !== undefined) {
+        setDarkMode(data.user.dark_mode);
+        localStorage.setItem('darkMode', JSON.stringify(data.user.dark_mode));
+      }
+      
       // Redirect ke dashboard
       navigate('/');
     } catch (err: any) {
