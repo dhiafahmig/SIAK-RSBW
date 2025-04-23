@@ -148,6 +148,7 @@ const Dashboard: React.FC = () => {
     <Layout 
       username={userData.username}
       name={userData.name} 
+      role={userData.role}
       darkMode={darkMode} 
       onToggleDarkMode={toggleTheme}
       enableTransitions={enableTransitions}

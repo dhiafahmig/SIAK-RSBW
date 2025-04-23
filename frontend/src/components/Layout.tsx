@@ -7,6 +7,7 @@ interface LayoutProps {
   children: React.ReactNode;
   username?: string;
   name?: string;
+  role?: string;
   darkMode: boolean;
   onToggleDarkMode: () => void;
   enableTransitions?: boolean;
@@ -16,6 +17,7 @@ const Layout: React.FC<LayoutProps> = ({
   children, 
   username = 'User', 
   name = 'Pengguna',
+  role = 'user',
   darkMode = false,
   onToggleDarkMode,
   enableTransitions = false
@@ -53,7 +55,7 @@ const Layout: React.FC<LayoutProps> = ({
         onToggleDarkMode={onToggleDarkMode}
         toggleSidebar={() => setSidebarOpen(!sidebarOpen)}
         sidebarOpen={sidebarOpen}
-        role="admin"
+        role={role}
       />
       
       <div className="flex flex-grow pt-16">
