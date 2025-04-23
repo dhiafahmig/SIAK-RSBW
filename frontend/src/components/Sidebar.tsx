@@ -58,17 +58,45 @@ const Sidebar: React.FC<SidebarProps> = ({ darkMode, isOpen }) => {
       )
     },
     {
-      name: 'Keuangan',
-      path: '/keuangan',
+      name: 'Pendapatan',
+      path: '/pendapatan',
       icon: (
         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
       ),
       subMenus: [
-        { name: 'Jurnal Umum', path: '/keuangan/jurnal' },
-        { name: 'Buku Besar', path: '/keuangan/buku-besar' },
-        { name: 'Neraca', path: '/keuangan/neraca' }
+        { name: 'Rawat Inap', path: '/pendapatan/rawat-inap' },
+        { name: 'Rawat Jalan', path: '/pendapatan/rawat-jalan' },
+        { name: 'Penjualan Bebas', path: '/pendapatan/penjualan-bebas' },
+        { name: 'Piutang', path: '/pendapatan/piutang' }
+      ]
+    },
+    {
+      name: 'Pengeluaran',
+      path: '/pengeluaran',
+      icon: (
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+        </svg>
+      ),
+      subMenus: [
+        { name: 'Medis', path: '/pengeluaran/medis' },
+        { name: 'Non Medis', path: '/pengeluaran/non-medis' },
+        { name: 'Gaji dan Honorarium', path: '/pengeluaran/gaji-honorarium' },
+        { name: 'Operasional Lainnya', path: '/pengeluaran/operasional-lainnya' }
+      ]
+    },
+    {
+      name: 'Laporan',
+      path: '/laporan',
+      icon: (
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+      ),
+      subMenus: [
+        { name: 'Pendapatan Harian', path: '/laporan/pendapatan-harian' },
       ]
     },
     {
