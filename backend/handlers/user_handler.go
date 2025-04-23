@@ -17,6 +17,22 @@ type UserRequest struct {
 	Role     string `json:"role"`
 }
 
+// GetIDFromURL mengekstrak ID dari URL (misalnya /api/users/123 akan mengembalikan 123)
+func GetIDFromURL(path string) int {
+	pathParts := strings.Split(path, "/")
+	if len(pathParts) < 4 {
+		return 0
+	}
+
+	idStr := pathParts[3]
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		return 0
+	}
+
+	return id
+}
+
 // GetUsersHandler menangani permintaan mendapatkan semua pengguna
 func GetUsersHandler(w http.ResponseWriter, r *http.Request) {
 	// Hanya menerima metode GET

@@ -63,6 +63,7 @@ const Layout: React.FC<LayoutProps> = ({
         <Sidebar 
           darkMode={darkMode} 
           isOpen={sidebarOpen} 
+          userRole={role}
         />
         
         {/* Main Content */}

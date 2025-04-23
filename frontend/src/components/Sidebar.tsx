@@ -9,14 +9,16 @@ interface MenuItem {
     name: string;
     path: string;
   }[];
+  onlyAdmin?: boolean;
 }
 
 interface SidebarProps {
   darkMode: boolean;
   isOpen: boolean;
+  userRole?: string;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ darkMode, isOpen }) => {
+const Sidebar: React.FC<SidebarProps> = ({ darkMode, isOpen, userRole = 'user' }) => {
   const location = useLocation();
   const [openSubmenu, setOpenSubmenu] = useState<string | null>(null);
   const [isMobile, setIsMobile] = useState(false);
@@ -110,9 +112,20 @@ const Sidebar: React.FC<SidebarProps> = ({ darkMode, isOpen }) => {
       subMenus: [
         { name: 'Daftar Pengguna', path: '/pengguna/list' },
         { name: 'Tambah Pengguna', path: '/pengguna/tambah' }
-      ]
+      ],
+      onlyAdmin: true
     }
   ];
+
+  // Filter menu berdasarkan role
+  const filteredMenuItems = menuItems.filter(item => {
+    // Jika onlyAdmin adalah true, tampilkan hanya untuk admin
+    if (item.onlyAdmin) {
+      return userRole && userRole.toLowerCase() === 'admin';
+    }
+    // Tampilkan menu untuk semua user
+    return true;
+  });
 
   const toggleSubmenu = (menuName: string) => {
     if (openSubmenu === menuName) {
@@ -154,7 +167,7 @@ const Sidebar: React.FC<SidebarProps> = ({ darkMode, isOpen }) => {
         
         <nav className="mt-4">
           <ul className="px-4">
-            {menuItems.map((item) => (
+            {filteredMenuItems.map((item) => (
               <li key={item.name} className="mb-2">
                 {item.subMenus ? (
                   <div>

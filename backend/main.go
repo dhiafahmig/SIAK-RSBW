@@ -41,7 +41,8 @@ func main() {
 	mux.HandleFunc("/api/user/settings/dark-mode", middleware.AuthMiddleware(handlers.UpdateDarkModeHandler))
 
 	// Route untuk manajemen pengguna: GET (list) dan POST (create)
-	mux.HandleFunc("/api/users", middleware.AuthMiddleware(func(w http.ResponseWriter, r *http.Request) {
+	// Hanya admin yang dapat mengakses
+	mux.HandleFunc("/api/users", middleware.AdminMiddleware(func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodGet:
 			handlers.GetUsersHandler(w, r)
@@ -53,7 +54,39 @@ func main() {
 	}))
 
 	// Route untuk manajemen pengguna: GET (single), PUT (update), DELETE
+	// Hanya admin yang dapat mengakses, kecuali untuk mendapatkan profil sendiri
 	mux.HandleFunc("/api/users/", middleware.AuthMiddleware(func(w http.ResponseWriter, r *http.Request) {
+		// Ambil userID dan role dari context
+		userIDCtx := r.Context().Value("userID")
+		roleCtx := r.Context().Value("userRole")
+
+		// Deteksi jika ini adalah admin atau pengguna yang mengakses profilnya sendiri
+		userID, ok := userIDCtx.(uint)
+		role, roleOk := roleCtx.(string)
+		isAdmin := roleOk && role == "admin"
+
+		// Baca ID dari URL
+		pathID := handlers.GetIDFromURL(r.URL.Path)
+
+		// Untuk GET, izinkan jika admin atau mengakses profil sendiri
+		if r.Method == http.MethodGet && (isAdmin || (ok && pathID == int(userID))) {
+			handlers.GetUserHandler(w, r)
+			return
+		}
+
+		// Untuk PUT, izinkan jika admin atau mengubah profil sendiri
+		if r.Method == http.MethodPut && (isAdmin || (ok && pathID == int(userID))) {
+			handlers.UpdateUserHandler(w, r)
+			return
+		}
+
+		// Untuk DELETE dan metode lain, hanya admin yang diizinkan
+		if !isAdmin {
+			http.Error(w, "Akses ditolak: Memerlukan hak admin", http.StatusForbidden)
+			return
+		}
+
+		// Proses permintaan jika memiliki hak akses
 		switch r.Method {
 		case http.MethodGet:
 			handlers.GetUserHandler(w, r)

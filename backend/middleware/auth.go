@@ -41,6 +41,28 @@ func AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
+// AdminMiddleware adalah middleware untuk memeriksa apakah pengguna adalah admin
+func AdminMiddleware(next http.HandlerFunc) http.HandlerFunc {
+	// Pertama gunakan AuthMiddleware untuk otentikasi
+	return AuthMiddleware(func(w http.ResponseWriter, r *http.Request) {
+		// Ambil role dari context
+		role, ok := r.Context().Value("userRole").(string)
+		if !ok {
+			http.Error(w, "Gagal mendapatkan role pengguna", http.StatusInternalServerError)
+			return
+		}
+
+		// Periksa apakah role adalah admin (case insensitive)
+		if strings.ToLower(role) != "admin" {
+			http.Error(w, "Akses ditolak: Memerlukan hak admin", http.StatusForbidden)
+			return
+		}
+
+		// Jika pengguna adalah admin, lanjutkan
+		next(w, r)
+	})
+}
+
 // EnableCORS adalah middleware untuk menangani Cross-Origin Resource Sharing
 func EnableCORS(handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
