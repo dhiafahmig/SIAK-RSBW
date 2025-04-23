@@ -137,16 +137,16 @@ const Sidebar: React.FC<SidebarProps> = ({ darkMode, isOpen }) => {
         fixed left-0 top-16 h-[calc(100vh-4rem)] z-20
         transition-all duration-500 ease-in-out
         ${isOpen ? 'w-64' : 'w-0'}
-        ${darkMode ? 'bg-gray-800' : 'bg-gray-900'}
+        ${darkMode ? 'bg-gray-800' : 'bg-white'}
         shadow-xl overflow-hidden
       `}
       aria-hidden={!isOpen}
     >
       {/* Inner content yang tidak akan terlipat */}
-      <div className={`w-64 h-full overflow-y-auto text-gray-200 ${isOpen ? 'opacity-100' : 'opacity-0'} transition-opacity duration-300`}>
-        <div className="px-6 py-4 border-b border-gray-700 transition-colors duration-500 ease-in-out h-16 flex items-center justify-center">
+      <div className={`w-64 h-full overflow-y-auto ${darkMode ? 'text-gray-200' : 'text-gray-800'} ${isOpen ? 'opacity-100' : 'opacity-0'} transition-opacity duration-300`}>
+        <div className={`px-6 py-4 border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'} transition-colors duration-500 ease-in-out h-16 flex items-center justify-center`}>
           <span className={`text-lg font-bold transition-colors duration-500 ease-in-out ${
-            darkMode ? 'text-blue-400' : 'text-blue-400'
+            darkMode ? 'text-blue-400' : 'text-blue-600'
           } whitespace-nowrap`}>
             Menu SIAK-RSBW
           </span>
@@ -163,7 +163,7 @@ const Sidebar: React.FC<SidebarProps> = ({ darkMode, isOpen }) => {
                       className={`w-full flex items-center justify-between p-2 rounded-md transition-colors duration-300 ${
                         openSubmenu === item.name 
                           ? (darkMode ? 'bg-blue-600 text-white' : 'bg-blue-600 text-white')
-                          : (darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-700')
+                          : (darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100 text-gray-700')
                       } whitespace-nowrap`}
                     >
                       <div className="flex items-center">
@@ -192,8 +192,8 @@ const Sidebar: React.FC<SidebarProps> = ({ darkMode, isOpen }) => {
                               to={subItem.path}
                               className={`block p-2 rounded-md transition-colors duration-300 ${
                                 isActive(subItem.path)
-                                  ? (darkMode ? 'bg-gray-700 text-blue-400' : 'bg-gray-700 text-blue-400')
-                                  : (darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-700')
+                                  ? (darkMode ? 'bg-gray-700 text-blue-400' : 'bg-gray-100 text-blue-600')
+                                  : (darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100 text-gray-600')
                               } whitespace-nowrap`}
                             >
                               {subItem.name}
@@ -209,7 +209,7 @@ const Sidebar: React.FC<SidebarProps> = ({ darkMode, isOpen }) => {
                     className={`flex items-center p-2 rounded-md transition-colors duration-300 ${
                       isActive(item.path)
                         ? (darkMode ? 'bg-blue-600 text-white' : 'bg-blue-600 text-white')
-                        : (darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-700')
+                        : (darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100 text-gray-700')
                     } whitespace-nowrap`}
                   >
                     {item.icon}

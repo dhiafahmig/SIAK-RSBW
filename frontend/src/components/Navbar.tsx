@@ -34,13 +34,13 @@ const Navbar: React.FC<NavbarProps> = ({
   };
 
   return (
-    <nav className={`${darkMode ? 'bg-gray-800' : 'bg-gray-900'} text-white shadow-md py-3 h-16 flex items-center fixed w-full z-10 transition-colors duration-500`}>
+    <nav className={`${darkMode ? 'bg-gray-800' : 'bg-white'} ${darkMode ? 'text-white' : 'text-gray-800'} shadow-md py-3 h-16 flex items-center fixed w-full z-10 transition-colors duration-500`}>
       <div className="container mx-auto px-4 py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <button 
               onClick={toggleSidebar}
-              className="mr-2"
+              className={`mr-2 ${darkMode ? 'text-white' : 'text-gray-700'}`}
               title={sidebarOpen ? "Sembunyikan sidebar" : "Tampilkan sidebar"}
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -50,9 +50,9 @@ const Navbar: React.FC<NavbarProps> = ({
             <img 
               src="/images/rs.png" 
               alt="Logo RSBW" 
-              className="h-8 w-8 bg-white rounded-full p-1" 
+              className="h-8 w-8 bg-white rounded-full p-1 shadow-sm" 
             />
-            <span className={`text-xl font-bold ${darkMode ? 'text-blue-400' : 'text-blue-400'}`}>SIAK-RSBW</span>
+            <span className={`text-xl font-bold ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>SIAK-RSBW</span>
           </div>
           
           
@@ -81,10 +81,10 @@ const Navbar: React.FC<NavbarProps> = ({
             <div className="relative">
               <button 
                 onClick={toggleDropdown}
-                className={`flex items-center space-x-2 py-1 px-2 rounded ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-800'} transition-colors duration-200`}
+                className={`flex items-center space-x-2 py-1 px-3 rounded-full ${darkMode ? 'hover:bg-gray-700 bg-gray-700' : 'bg-gray-200 hover:bg-gray-300'} transition-all duration-200 shadow-sm ${darkMode ? 'text-white' : 'text-gray-700'}`}
               >
-                <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center">
-                  <span className="text-sm font-bold">{name.slice(0, 1).toUpperCase()}</span>
+                <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center">
+                  <span className="text-sm font-bold text-gray-700">{name.slice(0, 1).toUpperCase()}</span>
                 </div>
                 <span>Halo, {name}</span>
                 <svg xmlns="http://www.w3.org/2000/svg" className={`h-4 w-4 transition-transform duration-200 ${dropdownOpen ? 'transform rotate-180' : ''}`} viewBox="0 0 20 20" fill="currentColor">
@@ -94,27 +94,29 @@ const Navbar: React.FC<NavbarProps> = ({
               
               {/* Dropdown Menu dengan transisi */}
               <div 
-                className={`absolute right-0 mt-2 w-64 rounded-md shadow-lg ${darkMode ? 'bg-gray-800' : 'bg-gray-900'} border border-gray-700 z-50 transform transition-all duration-300 origin-top-right ${dropdownOpen ? 'scale-100 opacity-100' : 'scale-95 opacity-0 pointer-events-none'}`}
+                className={`absolute right-0 mt-2 w-64 rounded-md shadow-lg ${darkMode ? 'bg-gray-800' : 'bg-white'} ${darkMode ? 'border border-gray-700' : 'border border-gray-200'} z-50 transform transition-all duration-300 origin-top-right ${dropdownOpen ? 'scale-100 opacity-100' : 'scale-95 opacity-0 pointer-events-none'}`}
               >
                 <div className="p-4">
-                  <h3 className="text-lg font-medium text-blue-400 border-b border-gray-700 pb-2">Informasi Pengguna</h3>
+                  <h3 className={`text-lg font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'} ${darkMode ? 'border-b border-gray-700' : 'border-b border-gray-200'} pb-2`}>Informasi Pengguna</h3>
                   
                   <table className="w-full mt-3 text-sm">
                     <tbody>
                       <tr>
-                        <td className="py-2 text-gray-400">Nama</td>
-                        <td className="py-2 text-white font-medium">{name}</td>
+                        <td className={`py-2 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Nama</td>
+                        <td className={`py-2 ${darkMode ? 'text-white' : 'text-gray-800'} font-medium`}>{name}</td>
                       </tr>
                       <tr>
-                        <td className="py-2 text-gray-400">Username</td>
-                        <td className="py-2 text-white">{username}</td>
+                        <td className={`py-2 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Username</td>
+                        <td className={`py-2 ${darkMode ? 'text-white' : 'text-gray-800'}`}>{username}</td>
                       </tr>
                       <tr>
-                        <td className="py-2 text-gray-400">Role</td>
+                        <td className={`py-2 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Role</td>
                         <td className="py-2">
                           <span className={`px-2 py-1 rounded-full text-xs ${
-                            role === 'admin' ? 'bg-red-900 text-red-200' : 'bg-blue-900 text-blue-200'
-                          }`}>
+                            role === 'admin' 
+                              ? (darkMode ? 'bg-red-900 text-red-200' : 'bg-red-100 text-red-800') 
+                              : (darkMode ? 'bg-green-900 text-green-200' : 'bg-green-100 text-green-800')
+                          } shadow-sm`}>
                             {role}
                           </span>
                         </td>
@@ -122,10 +124,10 @@ const Navbar: React.FC<NavbarProps> = ({
                     </tbody>
                   </table>
                   
-                  <div className="mt-4 pt-2 border-t border-gray-700">
+                  <div className={`mt-4 pt-2 ${darkMode ? 'border-t border-gray-700' : 'border-t border-gray-200'}`}>
                     <button 
                       onClick={() => navigate('/profile/edit')}
-                      className="w-full flex items-center justify-between p-2 rounded hover:bg-gray-700 transition-colors text-blue-400 hover:text-blue-300"
+                      className={`w-full flex items-center justify-between p-2 rounded ${darkMode ? 'hover:bg-gray-700 text-gray-300 hover:text-white' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'} transition-colors`}
                     >
                       <span className="font-medium">Edit Profil</span>
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -135,11 +137,11 @@ const Navbar: React.FC<NavbarProps> = ({
                     
                     <button 
                       onClick={handleLogout}
-                      className="w-full flex items-center justify-between p-2 mt-2 rounded hover:bg-gray-700 transition-colors text-red-400 hover:text-red-300"
+                      className={`w-full flex items-center justify-between p-2 mt-2 rounded ${darkMode ? 'hover:bg-gray-700 text-gray-300 hover:text-white' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'} transition-colors`}
                     >
                       <span className="font-medium">Logout</span>
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 001 1h12a1 1 0 001-1V7.414l-5-5H3zm7 2a1 1 0 000 2h1a1 1 0 100-2h-1zm-2 5a1 1 0 100 2h5a1 1 0 100-2h-5zm0 4a1 1 0 100 2h1a1 1 0 100-2h-1z" clipRule="evenodd" />
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                       </svg>
                     </button>
                   </div>
