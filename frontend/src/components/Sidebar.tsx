@@ -158,11 +158,18 @@ const Sidebar: React.FC<SidebarProps> = ({ darkMode, isOpen, userRole = 'user' }
       {/* Inner content yang tidak akan terlipat */}
       <div className={`w-64 h-full overflow-y-auto ${darkMode ? 'text-gray-200' : 'text-gray-800'} ${isOpen ? 'opacity-100' : 'opacity-0'} transition-opacity duration-300`}>
         <div className={`px-6 py-4 border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'} transition-colors duration-500 ease-in-out h-16 flex items-center justify-center`}>
-          <span className={`text-lg font-bold transition-colors duration-500 ease-in-out ${
-            darkMode ? 'text-blue-400' : 'text-blue-600'
-          } whitespace-nowrap`}>
-            Menu SIAK-RSBW
-          </span>
+          <div className="flex items-center">
+            <img 
+              src="/images/rs.png" 
+              alt="Logo RSBW" 
+              className="h-8 w-8 bg-white rounded-full p-1 shadow-sm mr-2" 
+            />
+            <span className={`text-lg font-bold transition-colors duration-500 ease-in-out ${
+              darkMode ? 'text-black-400' : 'text-black-600'
+            } whitespace-nowrap`}>
+              Keuangan RSBW
+            </span>
+          </div>
         </div>
         
         <nav className="mt-4">

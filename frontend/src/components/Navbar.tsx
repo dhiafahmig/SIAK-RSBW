@@ -52,7 +52,7 @@ const Navbar: React.FC<NavbarProps> = ({
               alt="Logo RSBW" 
               className="h-8 w-8 bg-white rounded-full p-1 shadow-sm" 
             />
-            <span className={`text-xl font-bold ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>SIAK-RSBW</span>
+            <span className={`text-xl font-bold ${darkMode ? 'text-black-400' : 'text-black-600'}`}>SIAK-RSBW</span>
           </div>
           
           

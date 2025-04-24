@@ -24,6 +24,15 @@ func main() {
 	// Route untuk endpoint diagnostik
 	mux.HandleFunc("/api/health", handlers.HealthCheckHandler)
 
+	// Route untuk tes koneksi MySQL
+	mux.HandleFunc("/api/mysql-check", handlers.MySQLCheckHandler)
+
+	// Route untuk laporan rawat inap
+	mux.HandleFunc("/api/laporan/rawat-inap", handlers.LaporanRawatInapHandler)
+
+	// Route untuk laporan rawat inap dari database (hanya berfungsi jika menggunakan MySQL)
+	mux.HandleFunc("/api/laporan/rawat-inap/db", handlers.LaporanRawatInapDBHandler)
+
 	// Route untuk memperbaiki database
 	mux.HandleFunc("/api/fix-database", handlers.FixDatabaseHandler)
 

@@ -2,9 +2,14 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
+	"os"
 	"siak-rsbw/backend/utils"
 	"time"
+
+	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
 )
 
 // DatabaseStatus menyimpan informasi status database
@@ -14,6 +19,18 @@ type DatabaseStatus struct {
 	TimeChecked time.Time `json:"time_checked"`
 	DBName      string    `json:"db_name,omitempty"`
 	Tables      []string  `json:"tables,omitempty"`
+	DBType      string    `json:"db_type,omitempty"`
+}
+
+// MySQLStatus menyimpan informasi status koneksi MySQL
+type MySQLStatus struct {
+	Connected   bool      `json:"connected"`
+	Message     string    `json:"message"`
+	TimeChecked time.Time `json:"time_checked"`
+	Host        string    `json:"host"`
+	Port        string    `json:"port"`
+	User        string    `json:"user"`
+	Database    string    `json:"database"`
 }
 
 // HealthCheckHandler menangani permintaan untuk memeriksa kesehatan aplikasi
@@ -77,6 +94,72 @@ func HealthCheckHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Gagal mengenkode response", http.StatusInternalServerError)
 		return
 	}
+}
+
+// MySQLCheckHandler menangani permintaan untuk memeriksa koneksi ke MySQL
+func MySQLCheckHandler(w http.ResponseWriter, r *http.Request) {
+	// Set header Content-Type
+	w.Header().Set("Content-Type", "application/json")
+
+	// Periksa koneksi MySQL
+	mysqlHost := getEnv("MYSQL_HOST", "localhost")
+	mysqlPort := getEnv("MYSQL_PORT", "3306")
+	mysqlUser := getEnv("MYSQL_USER", "root")
+	mysqlPassword := getEnv("MYSQL_PASSWORD", "")
+	mysqlDBName := getEnv("MYSQL_DBNAME", "sik_test")
+
+	// Format DSN untuk MySQL
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
+		mysqlUser, mysqlPassword, mysqlHost, mysqlPort, mysqlDBName)
+
+	var status MySQLStatus
+	status.TimeChecked = time.Now()
+	status.Host = mysqlHost
+	status.Port = mysqlPort
+	status.User = mysqlUser
+	status.Database = mysqlDBName
+
+	// Coba koneksi ke MySQL
+	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
+	if err != nil {
+		status.Connected = false
+		status.Message = fmt.Sprintf("Gagal terhubung ke database MySQL: %v", err)
+	} else {
+		// Dapatkan objek database SQL
+		sqlDB, err := db.DB()
+		if err != nil {
+			status.Connected = false
+			status.Message = fmt.Sprintf("Gagal mendapatkan objek SQL DB: %v", err)
+		} else {
+			// Tes Ping
+			err = sqlDB.Ping()
+			if err != nil {
+				status.Connected = false
+				status.Message = fmt.Sprintf("Ping database gagal: %v", err)
+			} else {
+				status.Connected = true
+				status.Message = "Berhasil terhubung ke database MySQL"
+
+				// Tutup koneksi setelah test
+				sqlDB.Close()
+			}
+		}
+	}
+
+	// Encode response JSON
+	encoder := json.NewEncoder(w)
+	if err := encoder.Encode(status); err != nil {
+		http.Error(w, "Gagal mengenkode response", http.StatusInternalServerError)
+		return
+	}
+}
+
+// getEnv mengambil nilai variabel lingkungan atau nilai default jika tidak ada
+func getEnv(key, defaultValue string) string {
+	if value, exists := os.LookupEnv(key); exists {
+		return value
+	}
+	return defaultValue
 }
 
 // FixDatabaseHandler menangani permintaan untuk memperbaiki database
