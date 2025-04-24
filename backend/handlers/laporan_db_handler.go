@@ -8,9 +8,6 @@ import (
 	"siak-rsbw/backend/models"
 	"siak-rsbw/backend/utils"
 	"time"
-
-	"gorm.io/driver/mysql"
-	"gorm.io/gorm"
 )
 
 // LaporanRawatInapDBHandler menangani permintaan untuk mendapatkan laporan rawat inap dari database MySQL
@@ -43,43 +40,14 @@ func LaporanRawatInapDBHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Cek apakah DB menggunakan MySQL
-	dbType := utils.GetDatabaseType()
-	if dbType != "mysql" {
-		http.Error(w, "Endpoint ini hanya tersedia untuk database MySQL", http.StatusBadRequest)
+	// Ambil instance MySQL DB dari utils
+	db := utils.GetMySQLDB()
+	if db == nil {
+		http.Error(w, "Koneksi ke database MySQL tidak tersedia", http.StatusInternalServerError)
 		return
 	}
 
-	// Ambil konfigurasi MySQL
-	mysqlHost := getEnvironmentVar("MYSQL_HOST", "192.168.10.88")
-	mysqlPort := getEnvironmentVar("MYSQL_PORT", "3306")
-	mysqlUser := getEnvironmentVar("MYSQL_USER", "backup")
-	mysqlPassword := getEnvironmentVar("MYSQL_PASSWORD", "backup")
-	mysqlDBName := getEnvironmentVar("MYSQL_DBNAME", "sik")
-
-	// Log informasi koneksi
-	fmt.Printf("Mencoba koneksi ke MySQL: %s@%s:%s/%s\n",
-		mysqlUser, mysqlHost, mysqlPort, mysqlDBName)
-
-	// Buat string koneksi DSN - tambahkan parameter allowAllFiles=true untuk akses eksternal
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local&allowAllFiles=true",
-		mysqlUser, mysqlPassword, mysqlHost, mysqlPort, mysqlDBName)
-
-	// Tambahkan timeout yang lebih panjang
-	gormConfig := &gorm.Config{
-		PrepareStmt: true, // Siapkan statement untuk performa lebih baik
-	}
-
-	// Buat koneksi baru ke database dengan menampilkan log error lengkap
-	db, err := gorm.Open(mysql.Open(dsn), gormConfig)
-	if err != nil {
-		errMessage := fmt.Sprintf("Gagal terhubung ke database: %v\nDSN: %s", err, dsn)
-		fmt.Println(errMessage) // Cetak error ke log server
-		http.Error(w, errMessage, http.StatusInternalServerError)
-		return
-	}
-
-	// Coba test koneksi dengan ping
+	// Cek apakah koneksi database berfungsi
 	sqlDB, err := db.DB()
 	if err != nil {
 		errMessage := fmt.Sprintf("Gagal mendapatkan instance SQL DB: %v", err)
@@ -87,11 +55,6 @@ func LaporanRawatInapDBHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, errMessage, http.StatusInternalServerError)
 		return
 	}
-
-	// Set timeout dan nilai-nilai koneksi
-	sqlDB.SetConnMaxLifetime(time.Minute * 3)
-	sqlDB.SetMaxOpenConns(10)
-	sqlDB.SetMaxIdleConns(10)
 
 	// Test ping
 	err = sqlDB.Ping()
@@ -102,7 +65,7 @@ func LaporanRawatInapDBHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Println("Koneksi ke database berhasil!")
+	fmt.Println("Koneksi ke database MySQL berhasil!")
 
 	// Query SQL
 	query := `

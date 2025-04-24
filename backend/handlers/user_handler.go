@@ -7,6 +7,8 @@ import (
 	"siak-rsbw/backend/utils"
 	"strconv"
 	"strings"
+
+	"gorm.io/gorm"
 )
 
 // UserRequest menyimpan data permintaan pengguna
@@ -33,6 +35,23 @@ func GetIDFromURL(path string) int {
 	return id
 }
 
+// Fungsi helper untuk mendapatkan database yang benar untuk user
+func getUserDB() *gorm.DB {
+	var dbToUse *gorm.DB
+	// Jika menggunakan MySQL sebagai database utama tapi user ada di PostgreSQL
+	if utils.GetDatabaseType() == "mysql" && utils.DB != utils.GetMySQLDB() {
+		// Gunakan PostgreSQL untuk users
+		dbToUse = utils.DB
+	} else if utils.GetDatabaseType() == "mysql" && utils.DB == utils.GetMySQLDB() {
+		// Jika menggunakan MySQL dan tabel users sudah dipindahkan ke MySQL
+		dbToUse = utils.DB
+	} else {
+		// PostgreSQL adalah database utama
+		dbToUse = utils.DB
+	}
+	return dbToUse
+}
+
 // GetUsersHandler menangani permintaan mendapatkan semua pengguna
 func GetUsersHandler(w http.ResponseWriter, r *http.Request) {
 	// Hanya menerima metode GET
@@ -57,7 +76,7 @@ func GetUsersHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Dapatkan semua pengguna dari database
 	var users []models.User
-	result := utils.DB.Order("id desc").Find(&users)
+	result := getUserDB().Order("id desc").Find(&users)
 	if result.Error != nil {
 		http.Error(w, "Gagal mengambil data pengguna: "+result.Error.Error(), http.StatusInternalServerError)
 		return
@@ -111,7 +130,7 @@ func GetUserHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Dapatkan pengguna dari database
-	user, err := models.FindUserByID(utils.DB, uint(targetID))
+	user, err := models.FindUserByID(getUserDB(), uint(targetID))
 	if err != nil {
 		http.Error(w, "Pengguna tidak ditemukan", http.StatusNotFound)
 		return
@@ -152,7 +171,7 @@ func CreateUserHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Cek apakah username sudah ada
 	var existingUserCount int64
-	utils.DB.Model(&models.User{}).Where("username = ?", req.Username).Count(&existingUserCount)
+	getUserDB().Model(&models.User{}).Where("username = ?", req.Username).Count(&existingUserCount)
 	if existingUserCount > 0 {
 		http.Error(w, "Username sudah digunakan", http.StatusConflict)
 		return
@@ -178,7 +197,7 @@ func CreateUserHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Simpan ke database
-	result := utils.DB.Create(&newUser)
+	result := getUserDB().Create(&newUser)
 	if result.Error != nil {
 		http.Error(w, "Gagal membuat pengguna: "+result.Error.Error(), http.StatusInternalServerError)
 		return
@@ -233,7 +252,7 @@ func UpdateUserHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Dapatkan pengguna dari database
-	user, err := models.FindUserByID(utils.DB, uint(targetID))
+	user, err := models.FindUserByID(getUserDB(), uint(targetID))
 	if err != nil {
 		http.Error(w, "Pengguna tidak ditemukan", http.StatusNotFound)
 		return
@@ -274,7 +293,7 @@ func UpdateUserHandler(w http.ResponseWriter, r *http.Request) {
 
 		// Cek apakah username sudah ada
 		var existingUserCount int64
-		utils.DB.Model(&models.User{}).Where("username = ?", req.Username).Count(&existingUserCount)
+		getUserDB().Model(&models.User{}).Where("username = ?", req.Username).Count(&existingUserCount)
 		if existingUserCount > 0 {
 			http.Error(w, "Username sudah digunakan", http.StatusConflict)
 			return
@@ -284,7 +303,7 @@ func UpdateUserHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Simpan perubahan ke database
-	result := utils.DB.Save(user)
+	result := getUserDB().Save(user)
 	if result.Error != nil {
 		http.Error(w, "Gagal memperbarui pengguna: "+result.Error.Error(), http.StatusInternalServerError)
 		return
@@ -338,14 +357,14 @@ func DeleteUserHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Dapatkan pengguna dari database
-	user, err := models.FindUserByID(utils.DB, uint(targetID))
+	user, err := models.FindUserByID(getUserDB(), uint(targetID))
 	if err != nil {
 		http.Error(w, "Pengguna tidak ditemukan", http.StatusNotFound)
 		return
 	}
 
 	// Hapus pengguna dari database
-	result := utils.DB.Delete(user)
+	result := getUserDB().Delete(user)
 	if result.Error != nil {
 		http.Error(w, "Gagal menghapus pengguna: "+result.Error.Error(), http.StatusInternalServerError)
 		return
