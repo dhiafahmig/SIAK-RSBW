@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Layout from '../components/Layout';
+import Layout from '../../components/Layout';
 import axios from 'axios';
-import { getCurrentTheme } from '../utils/theme';
+import { getCurrentTheme } from '../../utils/theme';
 
 // API URL
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080';

@@ -2,8 +2,8 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Dashboard from './pages/Dashboard';
 import Login from './pages/Login';
-import UserList from './pages/UserList';
-import AddUser from './pages/AddUser';
+import UserList from './pages/AddUser/UserList';
+import AddUser from './pages/AddUser/AddUser';
 import EditProfile from './pages/EditProfile';
 
 // Komponen ProtectedRoute untuk mengecek autentikasi

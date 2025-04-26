@@ -97,3 +97,80 @@ func parseDate(dateStr string) time.Time {
 	}
 	return t
 }
+
+// LaporanRawatJalanHandler menangani permintaan untuk mendapatkan laporan rawat jalan (data dummy)
+func LaporanRawatJalanHandler(w http.ResponseWriter, r *http.Request) {
+	// Set header Content-Type
+	w.Header().Set("Content-Type", "application/json")
+
+	// Hanya menerima metode GET
+	if r.Method != http.MethodGet {
+		http.Error(w, "Metode tidak diizinkan", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Ambil parameter tanggal dari query URL
+	tanggalAwal := r.URL.Query().Get("tanggal_awal")
+	tanggalAkhir := r.URL.Query().Get("tanggal_akhir")
+
+	// Jika tanggal tidak disediakan, gunakan rentang bulan ini
+	if tanggalAwal == "" || tanggalAkhir == "" {
+		now := time.Now()
+		firstOfMonth := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
+		lastOfMonth := time.Date(now.Year(), now.Month()+1, 0, 23, 59, 59, 0, now.Location())
+
+		if tanggalAwal == "" {
+			tanggalAwal = firstOfMonth.Format("2006-01-02")
+		}
+
+		if tanggalAkhir == "" {
+			tanggalAkhir = lastOfMonth.Format("2006-01-02")
+		}
+	}
+
+	// Data dummy untuk contoh
+	dummyData := []models.LaporanRawatJalan{
+		{
+			NoRawat:    "2023/01/101",
+			NoRkmMedis: "RM101",
+			NmPasien:   "PASIEN RAWAT JALAN 1",
+			NoNota:     "NJ001",
+			Tanggal:    parseDate("2023-01-12"),
+			BesarBayar: 750000,
+		},
+		{
+			NoRawat:    "2023/01/102",
+			NoRkmMedis: "RM102",
+			NmPasien:   "PASIEN RAWAT JALAN 2",
+			NoNota:     "NJ002",
+			Tanggal:    parseDate("2023-01-15"),
+			BesarBayar: 1250000,
+		},
+	}
+
+	// Hitung total pembayaran
+	var totalBayar float64
+	for _, data := range dummyData {
+		totalBayar += data.BesarBayar
+	}
+
+	// Siapkan response
+	response := map[string]interface{}{
+		"status":  "success",
+		"message": "Data laporan rawat jalan berhasil diambil",
+		"filter": map[string]string{
+			"tanggal_awal":  tanggalAwal,
+			"tanggal_akhir": tanggalAkhir,
+		},
+		"total_data":  len(dummyData),
+		"total_bayar": totalBayar,
+		"data":        dummyData,
+	}
+
+	// Encode respons ke JSON
+	encoder := json.NewEncoder(w)
+	if err := encoder.Encode(response); err != nil {
+		http.Error(w, "Gagal mengenkode response", http.StatusInternalServerError)
+		return
+	}
+}
