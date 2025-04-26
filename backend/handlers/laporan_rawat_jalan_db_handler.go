@@ -9,8 +9,8 @@ import (
 	"time"
 )
 
-// LaporanRawatJalanDBHandler menangani permintaan untuk mendapatkan laporan rawat jalan dari database MySQL
-func LaporanRawatJalanDBHandler(w http.ResponseWriter, r *http.Request) {
+// LaporanRawatJalanHandler menangani permintaan untuk mendapatkan laporan rawat jalan dari database MySQL
+func LaporanRawatJalanHandler(w http.ResponseWriter, r *http.Request) {
 	// Set header Content-Type
 	w.Header().Set("Content-Type", "application/json")
 

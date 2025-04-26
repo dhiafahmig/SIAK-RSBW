@@ -30,14 +30,8 @@ func main() {
 	// Route untuk laporan rawat inap
 	mux.HandleFunc("/api/laporan/rawat-inap", handlers.LaporanRawatInapHandler)
 
-	// Route untuk laporan rawat inap dari database (hanya berfungsi jika menggunakan MySQL)
-	mux.HandleFunc("/api/laporan/rawat-inap/db", handlers.LaporanRawatInapDBHandler)
-
 	// Route untuk laporan rawat jalan
 	mux.HandleFunc("/api/laporan/rawat-jalan", handlers.LaporanRawatJalanHandler)
-
-	// Route untuk laporan rawat jalan dari database (hanya berfungsi jika menggunakan MySQL)
-	mux.HandleFunc("/api/laporan/rawat-jalan/db", handlers.LaporanRawatJalanDBHandler)
 
 	// Route untuk memperbaiki database
 	mux.HandleFunc("/api/fix-database", handlers.FixDatabaseHandler)
