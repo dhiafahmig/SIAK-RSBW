@@ -8,6 +8,7 @@ interface MenuItem {
   subMenus?: {
     name: string;
     path: string;
+    icon?: JSX.Element;
   }[];
   onlyAdmin?: boolean;
 }
@@ -68,10 +69,42 @@ const Sidebar: React.FC<SidebarProps> = ({ darkMode, isOpen, userRole = 'user' }
         </svg>
       ),
       subMenus: [
-        { name: 'Rawat Inap', path: '/pendapatan/rawat-inap' },
-        { name: 'Rawat Jalan', path: '/pendapatan/rawat-jalan' },
-        { name: 'Penjualan Bebas', path: '/pendapatan/penjualan-bebas' },
-        { name: 'Piutang', path: '/pendapatan/piutang' }
+        { 
+          name: 'Rawat Inap', 
+          path: '/pendapatan/rawat-inap',
+          icon: (
+            <svg className="h-4 w-4 mr-2 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M9 21V7a2 2 0 012-2h2a2 2 0 012 2v14" />
+            </svg>
+          )
+        },
+        { 
+          name: 'Rawat Jalan', 
+          path: '/pendapatan/rawat-jalan',
+          icon: (
+            <svg className="h-4 w-4 mr-2 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2a4 4 0 018 0v2M9 21v-2a4 4 0 018 0v2M5 10h14M12 3v7" />
+            </svg>
+          )
+        },
+        { 
+          name: 'Penjualan Bebas', 
+          path: '/pendapatan/penjualan-bebas',
+          icon: (
+            <svg className="h-4 w-4 mr-2 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 10c-4.41 0-8-1.79-8-4V6c0-2.21 3.59-4 8-4s8 1.79 8 4v8c0 2.21-3.59 4-8 4z" />
+            </svg>
+          )
+        },
+        { 
+          name: 'Piutang', 
+          path: '/pendapatan/piutang',
+          icon: (
+            <svg className="h-4 w-4 mr-2 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+          )
+        }
       ]
     },
     {
@@ -210,13 +243,14 @@ const Sidebar: React.FC<SidebarProps> = ({ darkMode, isOpen, userRole = 'user' }
                           <li key={subItem.name}>
                             <Link
                               to={subItem.path}
-                              className={`block p-2 rounded-md transition-colors duration-300 ${
+                              className={`block p-2 rounded-md flex items-center transition-colors duration-300 ${
                                 isActive(subItem.path)
                                   ? (darkMode ? 'bg-gray-700 text-blue-400' : 'bg-gray-100 text-blue-600')
                                   : (darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100 text-gray-600')
                               } whitespace-nowrap`}
                             >
-                              {subItem.name}
+                              {subItem.icon}
+                              <span>{subItem.name}</span>
                             </Link>
                           </li>
                         ))}
