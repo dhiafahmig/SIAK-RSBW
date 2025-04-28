@@ -24,6 +24,11 @@ func LaporanRawatInapHandler(w http.ResponseWriter, r *http.Request) {
 	// Ambil parameter tanggal dari query URL
 	tanggalAwal := r.URL.Query().Get("tanggal_awal")
 	tanggalAkhir := r.URL.Query().Get("tanggal_akhir")
+	filterBy := r.URL.Query().Get("filter_by")
+
+	// Log parameter untuk debugging
+	fmt.Printf("Parameter filter: tanggal_awal=%s, tanggal_akhir=%s, filter_by=%s\n",
+		tanggalAwal, tanggalAkhir, filterBy)
 
 	// Jika tanggal tidak disediakan, gunakan rentang bulan ini
 	if tanggalAwal == "" || tanggalAkhir == "" {
@@ -68,40 +73,111 @@ func LaporanRawatInapHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Koneksi ke database MySQL berhasil!")
 
 	// Query SQL
-	query := `
-		SELECT
-			reg_periksa.no_rawat,
-			pasien.no_rkm_medis,
-			pasien.nm_pasien,
-			kamar_inap.tgl_masuk,
-			kamar_inap.tgl_keluar,
-			nota_inap.no_nota,
-			nota_inap.tanggal,
-			detail_nota_inap.besar_bayar
-		FROM
-			reg_periksa
-		INNER JOIN pasien ON reg_periksa.no_rkm_medis = pasien.no_rkm_medis
-		INNER JOIN kamar_inap ON kamar_inap.no_rawat = reg_periksa.no_rawat
-		LEFT JOIN nota_inap ON nota_inap.no_rawat = reg_periksa.no_rawat
-		LEFT JOIN detail_nota_inap ON detail_nota_inap.no_rawat = reg_periksa.no_rawat
-		WHERE
-			(kamar_inap.tgl_masuk BETWEEN ? AND ?)
-			OR (kamar_inap.tgl_keluar BETWEEN ? AND ?)
-	`
+	var query string
+
+	// Buat query berdasarkan filter
+	if filterBy == "tgl_keluar" {
+		query = `
+			SELECT DISTINCT
+				reg_periksa.no_rawat,
+				pasien.no_rkm_medis,
+				pasien.nm_pasien,
+				kamar_inap.tgl_masuk,
+				kamar_inap.tgl_keluar,
+				nota_inap.no_nota,
+				nota_inap.tanggal,
+				detail_nota_inap.besar_bayar
+			FROM
+				reg_periksa
+			INNER JOIN pasien ON reg_periksa.no_rkm_medis = pasien.no_rkm_medis
+			INNER JOIN kamar_inap ON kamar_inap.no_rawat = reg_periksa.no_rawat
+			LEFT JOIN nota_inap ON nota_inap.no_rawat = reg_periksa.no_rawat
+			LEFT JOIN detail_nota_inap ON detail_nota_inap.no_rawat = reg_periksa.no_rawat
+			WHERE
+				kamar_inap.tgl_keluar BETWEEN ? AND ?
+				AND kamar_inap.tgl_keluar IS NOT NULL
+			GROUP BY
+				reg_periksa.no_rawat
+		`
+	} else if filterBy == "tgl_masuk" {
+		query = `
+			SELECT DISTINCT
+				reg_periksa.no_rawat,
+				pasien.no_rkm_medis,
+				pasien.nm_pasien,
+				kamar_inap.tgl_masuk,
+				kamar_inap.tgl_keluar,
+				nota_inap.no_nota,
+				nota_inap.tanggal,
+				detail_nota_inap.besar_bayar
+			FROM
+				reg_periksa
+			INNER JOIN pasien ON reg_periksa.no_rkm_medis = pasien.no_rkm_medis
+			INNER JOIN kamar_inap ON kamar_inap.no_rawat = reg_periksa.no_rawat
+			LEFT JOIN nota_inap ON nota_inap.no_rawat = reg_periksa.no_rawat
+			LEFT JOIN detail_nota_inap ON detail_nota_inap.no_rawat = reg_periksa.no_rawat
+			WHERE
+				kamar_inap.tgl_masuk BETWEEN ? AND ?
+			GROUP BY
+				reg_periksa.no_rawat
+		`
+	} else {
+		// Query default atau filterBy=both (filter by tgl_masuk OR tgl_keluar)
+		query = `
+			SELECT DISTINCT
+				reg_periksa.no_rawat,
+				pasien.no_rkm_medis,
+				pasien.nm_pasien,
+				kamar_inap.tgl_masuk,
+				kamar_inap.tgl_keluar,
+				nota_inap.no_nota,
+				nota_inap.tanggal,
+				detail_nota_inap.besar_bayar
+			FROM
+				reg_periksa
+			INNER JOIN pasien ON reg_periksa.no_rkm_medis = pasien.no_rkm_medis
+			INNER JOIN kamar_inap ON kamar_inap.no_rawat = reg_periksa.no_rawat
+			LEFT JOIN nota_inap ON nota_inap.no_rawat = reg_periksa.no_rawat
+			LEFT JOIN detail_nota_inap ON detail_nota_inap.no_rawat = reg_periksa.no_rawat
+			WHERE
+				(kamar_inap.tgl_masuk BETWEEN ? AND ?)
+				OR (kamar_inap.tgl_keluar BETWEEN ? AND ?)
+			GROUP BY
+				reg_periksa.no_rawat
+		`
+	}
 
 	// Eksekusi query
 	var result []models.LaporanRawatInap
-	err = db.Raw(query,
-		tanggalAwal,
-		tanggalAkhir,
-		tanggalAwal,
-		tanggalAkhir,
-	).Scan(&result).Error
 
-	if err != nil {
-		http.Error(w, fmt.Sprintf("Gagal menjalankan query: %v", err), http.StatusInternalServerError)
+	// Log detail query untuk debugging
+	fmt.Printf("Filter By: %s\n", filterBy)
+	fmt.Printf("Query yang dijalankan: %s\n", query)
+	fmt.Printf("Parameter: tanggal_awal=%s, tanggal_akhir=%s\n", tanggalAwal, tanggalAkhir)
+
+	var queryErr error
+	if filterBy == "tgl_keluar" || filterBy == "tgl_masuk" {
+		queryErr = db.Raw(query,
+			tanggalAwal,
+			tanggalAkhir,
+		).Scan(&result).Error
+	} else {
+		// Untuk filter "both", tetap menggunakan 4 parameter
+		queryErr = db.Raw(query,
+			tanggalAwal,
+			tanggalAkhir,
+			tanggalAwal,
+			tanggalAkhir,
+		).Scan(&result).Error
+	}
+
+	if queryErr != nil {
+		http.Error(w, fmt.Sprintf("Gagal menjalankan query: %v", queryErr), http.StatusInternalServerError)
 		return
 	}
+
+	// Log jumlah hasil untuk debugging
+	fmt.Printf("Jumlah data yang ditemukan: %d\n", len(result))
 
 	// Jika tidak ada hasil, kembalikan array kosong
 	if result == nil {

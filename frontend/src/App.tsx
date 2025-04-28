@@ -5,6 +5,7 @@ import Login from './pages/Login';
 import UserList from './pages/AddUser/UserList';
 import AddUser from './pages/AddUser/AddUser';
 import EditProfile from './pages/EditProfile';
+import LaporanRawatInap from './pages/pendapatan/rawatinap';
 
 // Komponen ProtectedRoute untuk mengecek autentikasi
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -45,6 +46,16 @@ function App() {
           element={
             <ProtectedRoute>
               <AddUser />
+            </ProtectedRoute>
+          } 
+        />
+        
+        {/* Rute Pendapatan */}
+        <Route 
+          path="/pendapatan/rawat-inap" 
+          element={
+            <ProtectedRoute>
+              <LaporanRawatInap />
             </ProtectedRoute>
           } 
         />
