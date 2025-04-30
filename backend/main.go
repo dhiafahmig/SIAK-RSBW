@@ -31,7 +31,7 @@ func main() {
 	mux.HandleFunc("/api/laporan/rawat-inap", handlers.LaporanRawatInapHandler)
 
 	// Route untuk laporan rawat jalan
-	mux.HandleFunc("/api/laporan/rawat-jalan", handlers.LaporanRawatJalanHandler)
+	mux.HandleFunc("/api/laporan/rawat-jalan", handlers.RawatJalanHandler)
 
 	// Route untuk penjualan bebas obat
 	mux.HandleFunc("/api/laporan/penjualan-obat", handlers.PenjualanBebasObatHandler)

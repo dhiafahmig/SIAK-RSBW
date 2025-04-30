@@ -9,8 +9,8 @@ import (
 	"time"
 )
 
-// LaporanRawatJalanHandler menangani permintaan untuk mendapatkan laporan rawat jalan dari database MySQL
-func LaporanRawatJalanHandler(w http.ResponseWriter, r *http.Request) {
+// RawatJalanHandler menangani permintaan untuk mendapatkan laporan rawat jalan dari database MySQL
+func RawatJalanHandler(w http.ResponseWriter, r *http.Request) {
 	// Set header Content-Type
 	w.Header().Set("Content-Type", "application/json")
 
@@ -23,6 +23,11 @@ func LaporanRawatJalanHandler(w http.ResponseWriter, r *http.Request) {
 	// Ambil parameter tanggal dari query URL
 	tanggalAwal := r.URL.Query().Get("tanggal_awal")
 	tanggalAkhir := r.URL.Query().Get("tanggal_akhir")
+	filterBy := r.URL.Query().Get("filter_by")
+
+	// Log parameter untuk debugging
+	fmt.Printf("Parameter filter rawat jalan: tanggal_awal=%s, tanggal_akhir=%s, filter_by=%s\n",
+		tanggalAwal, tanggalAkhir, filterBy)
 
 	// Jika tanggal tidak disediakan, gunakan rentang bulan ini
 	if tanggalAwal == "" || tanggalAkhir == "" {
@@ -66,35 +71,114 @@ func LaporanRawatJalanHandler(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Println("Koneksi ke database MySQL berhasil!")
 
-	// Query SQL berdasarkan query yang diberikan user
-	query := `
-		SELECT
-			reg_periksa.no_rawat,
-			pasien.no_rkm_medis,
-			pasien.nm_pasien,
-			nota_jalan.no_nota,
-			nota_jalan.tanggal,
-			detail_nota_jalan.besar_bayar
-		FROM
-			reg_periksa
-		INNER JOIN pasien ON reg_periksa.no_rkm_medis = pasien.no_rkm_medis
-		LEFT JOIN nota_jalan ON nota_jalan.no_rawat = reg_periksa.no_rawat
-		LEFT JOIN detail_nota_jalan ON detail_nota_jalan.no_rawat = reg_periksa.no_rawat
-		WHERE
-			nota_jalan.tanggal BETWEEN ? AND ?
-	`
+	// Query SQL
+	var query string
+
+	// Buat query berdasarkan filter
+	if filterBy == "tgl_bayar" {
+		query = `
+			SELECT DISTINCT
+				reg_periksa.no_rawat,
+				pasien.no_rkm_medis,
+				pasien.nm_pasien,
+				reg_periksa.tgl_registrasi,
+				poliklinik.nm_poli,
+				nota_jalan.no_nota,
+				nota_jalan.tanggal as tgl_bayar,
+				detail_nota_jalan.besar_bayar
+			FROM
+				reg_periksa
+			INNER JOIN pasien ON reg_periksa.no_rkm_medis = pasien.no_rkm_medis
+			INNER JOIN poliklinik ON reg_periksa.kd_poli = poliklinik.kd_poli
+			LEFT JOIN nota_jalan ON nota_jalan.no_rawat = reg_periksa.no_rawat
+			LEFT JOIN detail_nota_jalan ON detail_nota_jalan.no_rawat = reg_periksa.no_rawat
+			WHERE
+				nota_jalan.tanggal BETWEEN ? AND ?
+				AND reg_periksa.status_lanjut = 'Ralan'
+			GROUP BY
+				reg_periksa.no_rawat
+		`
+	} else if filterBy == "tgl_registrasi" {
+		query = `
+			SELECT DISTINCT
+				reg_periksa.no_rawat,
+				pasien.no_rkm_medis,
+				pasien.nm_pasien,
+				reg_periksa.tgl_registrasi,
+				poliklinik.nm_poli,
+				nota_jalan.no_nota,
+				nota_jalan.tanggal as tgl_bayar,
+				detail_nota_jalan.besar_bayar
+			FROM
+				reg_periksa
+			INNER JOIN pasien ON reg_periksa.no_rkm_medis = pasien.no_rkm_medis
+			INNER JOIN poliklinik ON reg_periksa.kd_poli = poliklinik.kd_poli
+			LEFT JOIN nota_jalan ON nota_jalan.no_rawat = reg_periksa.no_rawat
+			LEFT JOIN detail_nota_jalan ON detail_nota_jalan.no_rawat = reg_periksa.no_rawat
+			WHERE
+				reg_periksa.tgl_registrasi BETWEEN ? AND ?
+				AND reg_periksa.status_lanjut = 'Ralan'
+			GROUP BY
+				reg_periksa.no_rawat
+		`
+	} else {
+		// Query default atau filterBy=both (filter by tgl_registrasi OR tgl_bayar)
+		query = `
+			SELECT DISTINCT
+				reg_periksa.no_rawat,
+				pasien.no_rkm_medis,
+				pasien.nm_pasien,
+				reg_periksa.tgl_registrasi,
+				poliklinik.nm_poli,
+				nota_jalan.no_nota,
+				nota_jalan.tanggal as tgl_bayar,
+				detail_nota_jalan.besar_bayar
+			FROM
+				reg_periksa
+			INNER JOIN pasien ON reg_periksa.no_rkm_medis = pasien.no_rkm_medis
+			INNER JOIN poliklinik ON reg_periksa.kd_poli = poliklinik.kd_poli
+			LEFT JOIN nota_jalan ON nota_jalan.no_rawat = reg_periksa.no_rawat
+			LEFT JOIN detail_nota_jalan ON detail_nota_jalan.no_rawat = reg_periksa.no_rawat
+			WHERE
+				(reg_periksa.tgl_registrasi BETWEEN ? AND ?)
+				OR (nota_jalan.tanggal BETWEEN ? AND ?)
+				AND reg_periksa.status_lanjut = 'Ralan'
+			GROUP BY
+				reg_periksa.no_rawat
+		`
+	}
 
 	// Eksekusi query
 	var result []models.LaporanRawatJalan
-	err = db.Raw(query,
-		tanggalAwal,
-		tanggalAkhir,
-	).Scan(&result).Error
 
-	if err != nil {
-		http.Error(w, fmt.Sprintf("Gagal menjalankan query: %v", err), http.StatusInternalServerError)
+	// Log detail query untuk debugging
+	fmt.Printf("Filter By: %s\n", filterBy)
+	fmt.Printf("Query yang dijalankan: %s\n", query)
+	fmt.Printf("Parameter: tanggal_awal=%s, tanggal_akhir=%s\n", tanggalAwal, tanggalAkhir)
+
+	var queryErr error
+	if filterBy == "tgl_bayar" || filterBy == "tgl_registrasi" {
+		queryErr = db.Raw(query,
+			tanggalAwal,
+			tanggalAkhir,
+		).Scan(&result).Error
+	} else {
+		// Untuk filter "both", tetap menggunakan 4 parameter
+		queryErr = db.Raw(query,
+			tanggalAwal,
+			tanggalAkhir,
+			tanggalAwal,
+			tanggalAkhir,
+		).Scan(&result).Error
+	}
+
+	if queryErr != nil {
+		http.Error(w, fmt.Sprintf("Gagal menjalankan query: %v", queryErr), http.StatusInternalServerError)
 		return
 	}
+
+	// Log jumlah hasil untuk debugging
+	fmt.Printf("Jumlah data yang ditemukan: %d\n", len(result))
 
 	// Jika tidak ada hasil, kembalikan array kosong
 	if result == nil {

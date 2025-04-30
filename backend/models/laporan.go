@@ -16,12 +16,14 @@ type LaporanRawatInap struct {
 
 // LaporanRawatJalan adalah model untuk hasil query laporan rawat jalan
 type LaporanRawatJalan struct {
-	NoRawat    string    `json:"no_rawat"`
-	NoRkmMedis string    `json:"no_rkm_medis"`
-	NmPasien   string    `json:"nm_pasien"`
-	NoNota     string    `json:"no_nota"`
-	Tanggal    time.Time `json:"tanggal"`
-	BesarBayar float64   `json:"besar_bayar"`
+	NoRawat       string    `json:"no_rawat"`
+	NoRkmMedis    string    `json:"no_rkm_medis"`
+	NmPasien      string    `json:"nm_pasien"`
+	TglRegistrasi time.Time `json:"tgl_registrasi"`
+	NmPoli        string    `json:"nm_poli"`
+	NoNota        string    `json:"no_nota"`
+	TglBayar      time.Time `json:"tgl_bayar"`
+	BesarBayar    float64   `json:"besar_bayar"`
 }
 
 // TanggalFilter adalah struktur untuk filter tanggal di request
