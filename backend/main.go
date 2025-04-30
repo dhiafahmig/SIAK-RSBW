@@ -39,9 +39,6 @@ func main() {
 	// Route untuk penerimaan obat
 	mux.HandleFunc("/api/laporan/penerimaan-obat", handlers.PenerimaanObatHandler)
 
-	// Route untuk memperbaiki database
-	mux.HandleFunc("/api/fix-database", handlers.FixDatabaseHandler)
-
 	// Route untuk login
 	mux.HandleFunc("/api/auth/login", handlers.LoginHandler)
 

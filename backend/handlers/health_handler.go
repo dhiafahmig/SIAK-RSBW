@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"siak-rsbw/backend/utils"
@@ -35,7 +36,6 @@ type MySQLStatus struct {
 
 // HealthResponse adalah struktur respons untuk endpoint health check
 type HealthResponse struct {
-	PostgresDB DatabaseStatus `json:"postgres_db"`
 	MySQLDB    DatabaseStatus `json:"mysql_db"`
 	MainDBType string         `json:"main_db_type"`
 }
@@ -45,16 +45,13 @@ func HealthCheckHandler(w http.ResponseWriter, r *http.Request) {
 	// Set header Content-Type
 	w.Header().Set("Content-Type", "application/json")
 
-	// Siapkan response dengan kedua status database
+	// Siapkan response dengan status database MySQL
 	response := HealthResponse{
 		MainDBType: utils.GetDatabaseType(),
 	}
 
-	// Periksa koneksi database PostgreSQL
-	response.PostgresDB = checkDatabaseConnection(utils.DB, "postgres")
-
 	// Periksa koneksi database MySQL
-	response.MySQLDB = checkDatabaseConnection(utils.GetMySQLDB(), "mysql")
+	response.MySQLDB = checkDatabaseConnection(utils.DB, "mysql")
 
 	// Encode response JSON
 	encoder := json.NewEncoder(w)
@@ -67,6 +64,7 @@ func HealthCheckHandler(w http.ResponseWriter, r *http.Request) {
 // checkDatabaseConnection memeriksa koneksi database dan mengembalikan status
 func checkDatabaseConnection(db *gorm.DB, dbType string) DatabaseStatus {
 	if db == nil {
+		log.Printf("Koneksi database %s tidak tersedia", dbType)
 		return DatabaseStatus{
 			Connected:   false,
 			Message:     fmt.Sprintf("Database %s tidak tersedia", dbType),
@@ -101,23 +99,7 @@ func checkDatabaseConnection(db *gorm.DB, dbType string) DatabaseStatus {
 	var dbName string
 	var tables []string
 
-	if dbType == "postgres" {
-		row := db.Raw("SELECT current_database()").Row()
-		row.Scan(&dbName)
-
-		// Dapatkan daftar tabel
-		if dbName != "" {
-			rows, err := db.Raw("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'").Rows()
-			if err == nil {
-				defer rows.Close()
-				for rows.Next() {
-					var tableName string
-					rows.Scan(&tableName)
-					tables = append(tables, tableName)
-				}
-			}
-		}
-	} else if dbType == "mysql" {
+	if dbType == "mysql" {
 		row := db.Raw("SELECT DATABASE()").Row()
 		row.Scan(&dbName)
 
@@ -209,43 +191,4 @@ func getEnv(key, defaultValue string) string {
 		return value
 	}
 	return defaultValue
-}
-
-// FixDatabaseHandler menangani permintaan untuk memperbaiki database
-func FixDatabaseHandler(w http.ResponseWriter, r *http.Request) {
-	// Set header Content-Type
-	w.Header().Set("Content-Type", "application/json")
-
-	// Hanya menerima metode POST
-	if r.Method != http.MethodPost {
-		http.Error(w, "Metode tidak diijinkan", http.StatusMethodNotAllowed)
-		return
-	}
-
-	// Coba lakukan auto migrate ulang
-	err := utils.DB.AutoMigrate(utils.GetUserModel())
-	if err != nil {
-		http.Error(w, "Gagal melakukan auto migrate: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	// Buat user admin default jika belum ada
-	err = utils.CreateDefaultAdminIfNotExists()
-	if err != nil {
-		http.Error(w, "Gagal membuat user admin: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	// Berhasil
-	response := map[string]string{
-		"status":  "success",
-		"message": "Database telah diperbaiki dan tabel users telah dibuat. User admin default telah dibuat jika belum ada.",
-	}
-
-	// Encode response JSON
-	encoder := json.NewEncoder(w)
-	if err := encoder.Encode(response); err != nil {
-		http.Error(w, "Gagal mengenkode response", http.StatusInternalServerError)
-		return
-	}
 }

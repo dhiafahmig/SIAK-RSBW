@@ -9,14 +9,14 @@ import (
 
 // User merepresentasikan model pengguna dalam database
 type User struct {
-	ID        uint      `json:"id" gorm:"primaryKey"`
-	Username  string    `json:"username" gorm:"uniqueIndex;not null"`
-	Password  string    `json:"-" gorm:"not null"` // "-" berarti tidak dikembalikan dalam JSON
-	Role      string    `json:"role" gorm:"default:user"`
-	Name      string    `json:"name"`
-	DarkMode  bool      `json:"dark_mode" gorm:"default:false"`
-	CreatedAt time.Time `json:"created_at" gorm:"autoCreateTime"`
-	UpdatedAt time.Time `json:"updated_at" gorm:"autoUpdateTime"`
+	ID        uint      `json:"id" gorm:"primaryKey;autoIncrement"`
+	Username  string    `json:"username" gorm:"type:longtext;unique;not null"`
+	Password  string    `json:"-" gorm:"type:longtext;not null"` // "-" berarti tidak dikembalikan dalam JSON
+	Role      string    `json:"role" gorm:"type:varchar(191);default:'user'"`
+	Name      string    `json:"name" gorm:"type:longtext"`
+	DarkMode  bool      `json:"dark_mode" gorm:"type:tinyint(1);default:0"`
+	CreatedAt time.Time `json:"created_at" gorm:"type:datetime(3)"`
+	UpdatedAt time.Time `json:"updated_at" gorm:"type:datetime(3)"`
 }
 
 // CheckPassword membandingkan password yang diberikan dengan password yang tersimpan
