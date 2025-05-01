@@ -88,11 +88,20 @@ const Sidebar: React.FC<SidebarProps> = ({ darkMode, isOpen, userRole = 'user' }
           )
         },
         { 
-          name: 'Penjualan Bebas', 
-          path: '/pendapatan/penjualan-bebas',
+          name: 'Penjualan Obat', 
+          path: '/pendapatan/penjualan-obat',
           icon: (
             <svg className="h-4 w-4 mr-2 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 10c-4.41 0-8-1.79-8-4V6c0-2.21 3.59-4 8-4s8 1.79 8 4v8c0 2.21-3.59 4-8 4z" />
+            </svg>
+          )
+        },
+        { 
+          name: 'Penerimaan Obat', 
+          path: '/pendapatan/penerimaan-obat',
+          icon: (
+            <svg className="h-4 w-4 mr-2 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
           )
         },

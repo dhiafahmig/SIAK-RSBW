@@ -7,6 +7,8 @@ import AddUser from './pages/AddUser/AddUser';
 import EditProfile from './pages/EditProfile';
 import LaporanRawatInap from './pages/pendapatan/rawatinap';
 import LaporanRawatJalan from './pages/pendapatan/rawatjalan';
+import PenerimaanObat from './pages/pendapatan/jualbebas';
+import PenjualanObat from './pages/pendapatan/jualobat';
 
 // Komponen ProtectedRoute untuk mengecek autentikasi
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -65,6 +67,22 @@ function App() {
           element={
             <ProtectedRoute>
               <LaporanRawatJalan />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/pendapatan/penerimaan-obat" 
+          element={
+            <ProtectedRoute>
+              <PenerimaanObat />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/pendapatan/penjualan-obat" 
+          element={
+            <ProtectedRoute>
+              <PenjualanObat />
             </ProtectedRoute>
           } 
         />
