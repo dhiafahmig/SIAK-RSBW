@@ -3,9 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import Layout from '../../../components/Layout';
 import axios from 'axios';
 import { getCurrentTheme, toggleDarkMode } from '../../../utils/theme';
+import API_CONFIG from '../../../config/api';
 
-// API URL
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080';
 
 const LaporanRawatJalan: React.FC = () => {
   const navigate = useNavigate();
@@ -125,14 +124,14 @@ const LaporanRawatJalan: React.FC = () => {
         darkMode: darkMode, 
         darkModeType: typeof darkMode,
         darkModeValue: darkMode ? 1 : 0,
-        endpoint: `${API_URL}/api/user/settings/dark-mode?id=${userData.id}`
+        endpoint: `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.USER.DARK_MODE}?id=${userData.id}`
       });
       
       // Kirim sebagai angka 1 atau 0 untuk kompatibilitas dengan MySQL tinyint
       const payload = { dark_mode: darkMode ? 1 : 0 };
       console.log("Payload:", JSON.stringify(payload));
       
-      const response = await axios.post(`${API_URL}/api/user/settings/dark-mode?id=${userData.id}`, 
+      const response = await axios.post(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.USER.DARK_MODE}?id=${userData.id}`, 
         payload,
         {
           headers: {
@@ -166,7 +165,7 @@ const LaporanRawatJalan: React.FC = () => {
 
       console.log("Fetching dark mode preference from database for user:", userId);
       
-      const response = await axios.get(`${API_URL}/api/user/settings?id=${userId}`, {
+      const response = await axios.get(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.USER.SETTINGS}?id=${userId}`, {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -226,7 +225,7 @@ const LaporanRawatJalan: React.FC = () => {
       // Pastikan untuk mengirimkan parameter filter_by yang benar
       console.log("Mengirim filter_by:", filter.filter_by);
       
-      const response = await axios.get(`${API_URL}/api/laporan/rawat-jalan`, {
+      const response = await axios.get(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.LAPORAN.RAWAT_JALAN}`, {
         params: {
           tanggal_awal: tanggalAwal,
           tanggal_akhir: tanggalAkhir,
@@ -267,7 +266,7 @@ const LaporanRawatJalan: React.FC = () => {
       // Debug: log filter yang digunakan
       console.log("Filter yang digunakan:", filter);
       
-      const response = await axios.get(`${API_URL}/api/laporan/rawat-jalan`, {
+      const response = await axios.get(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.LAPORAN.RAWAT_JALAN}`, {
         params: {
           tanggal_awal: filter.tanggal_awal,
           tanggal_akhir: filter.tanggal_akhir,

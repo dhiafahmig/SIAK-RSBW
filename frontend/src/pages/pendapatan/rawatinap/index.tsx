@@ -3,9 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Layout from '../../../components/Layout';
 import axios from 'axios';
 import { getCurrentTheme } from '../../../utils/theme';
-
-// API URL
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080';
+import API_CONFIG from '../../../config/api';
 
 const LaporanRawatInap: React.FC = () => {
   const navigate = useNavigate();
@@ -134,7 +132,7 @@ const LaporanRawatInap: React.FC = () => {
       // Pastikan untuk mengirimkan parameter filter_by yang benar
       console.log("Mengirim filter_by:", filter.filter_by);
       
-      const response = await axios.get(`${API_URL}/api/laporan/rawat-inap`, {
+      const response = await axios.get(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.LAPORAN.RAWAT_INAP}`, {
         params: {
           tanggal_awal: tanggalAwal,
           tanggal_akhir: tanggalAkhir,
@@ -175,7 +173,7 @@ const LaporanRawatInap: React.FC = () => {
       // Debug: log filter yang digunakan
       console.log("Filter yang digunakan:", filter);
       
-      const response = await axios.get(`${API_URL}/api/laporan/rawat-inap`, {
+      const response = await axios.get(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.LAPORAN.RAWAT_INAP}`, {
         params: {
           tanggal_awal: filter.tanggal_awal,
           tanggal_akhir: filter.tanggal_akhir,

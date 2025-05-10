@@ -3,9 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Layout from '../../../components/Layout';
 import axios from 'axios';
 import { getCurrentTheme } from '../../../utils/theme';
-
-// API URL
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080';
+import API_CONFIG from '../../../config/api';
 
 const PenerimaanObat: React.FC = () => {
   const navigate = useNavigate();
@@ -143,7 +141,7 @@ const PenerimaanObat: React.FC = () => {
   const fetchDataWithDates = async (tanggalAwal: string, tanggalAkhir: string) => {
     setLoading(true);
     try {
-      const response = await axios.get(`${API_URL}/api/laporan/penerimaan-obat`, {
+      const response = await axios.get(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.LAPORAN.PENERIMAAN_OBAT}`, {
         params: {
           tanggal_awal: tanggalAwal,
           tanggal_akhir: tanggalAkhir,
@@ -183,7 +181,7 @@ const PenerimaanObat: React.FC = () => {
       // Debug: log filter yang digunakan
       console.log("Filter yang digunakan:", filter);
       
-      const response = await axios.get(`${API_URL}/api/laporan/penerimaan-obat`, {
+      const response = await axios.get(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.LAPORAN.PENERIMAAN_OBAT}`, {
         params: {
           tanggal_awal: filter.tanggal_awal,
           tanggal_akhir: filter.tanggal_akhir,
@@ -298,155 +296,141 @@ const PenerimaanObat: React.FC = () => {
 
         {/* Form Filter */}
         <div className={`mb-6 p-4 rounded-lg shadow-md ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
-          <h2 className={`text-lg font-semibold mb-4 ${darkMode ? 'text-white' : 'text-gray-800'}`}>
-            Filter Data
-          </h2>
-          
-          <form onSubmit={handleFilterSubmit} className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className={`block mb-2 text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                Tanggal Awal
-              </label>
-              <input
-                type="date"
-                name="tanggal_awal"
-                value={filter.tanggal_awal}
-                onChange={handleFilterChange}
-                className={`w-full p-2 border rounded ${darkMode ? 'bg-gray-700 text-white border-gray-600' : 'bg-white text-gray-900 border-gray-300'}`}
-              />
+          <h2 className={`text-lg font-semibold mb-3 ${darkMode ? 'text-white' : 'text-gray-800'}`}>Filter</h2>
+          <form onSubmit={handleFilterSubmit}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div>
+                <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                  Tanggal Awal
+                </label>
+                <input
+                  type="date"
+                  name="tanggal_awal"
+                  value={filter.tanggal_awal}
+                  onChange={handleFilterChange}
+                  className={`w-full p-2 border rounded ${darkMode 
+                    ? 'bg-gray-700 border-gray-600 text-white' 
+                    : 'bg-white border-gray-300 text-gray-900'
+                  }`}
+                />
+              </div>
+              <div>
+                <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                  Tanggal Akhir
+                </label>
+                <input
+                  type="date"
+                  name="tanggal_akhir"
+                  value={filter.tanggal_akhir}
+                  onChange={handleFilterChange}
+                  className={`w-full p-2 border rounded ${darkMode 
+                    ? 'bg-gray-700 border-gray-600 text-white' 
+                    : 'bg-white border-gray-300 text-gray-900'
+                  }`}
+                />
+              </div>
             </div>
-            
-            <div>
-              <label className={`block mb-2 text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                Tanggal Akhir
-              </label>
-              <input
-                type="date"
-                name="tanggal_akhir"
-                value={filter.tanggal_akhir}
-                onChange={handleFilterChange}
-                className={`w-full p-2 border rounded ${darkMode ? 'bg-gray-700 text-white border-gray-600' : 'bg-white text-gray-900 border-gray-300'}`}
-              />
-            </div>
-            
-            <div className="flex items-end">
+            <div className="flex justify-end">
               <button
                 type="submit"
-                className={`px-4 py-2 rounded font-medium ${darkMode 
-                  ? 'bg-blue-600 hover:bg-blue-700 text-white' 
-                  : 'bg-blue-500 hover:bg-blue-600 text-white'}`}
+                className={`px-4 py-2 rounded-md ${darkMode ? 'bg-blue-600 hover:bg-blue-700' : 'bg-blue-500 hover:bg-blue-600'} text-white focus:outline-none`}
               >
-                Filter
+                Terapkan Filter
               </button>
             </div>
           </form>
         </div>
 
-        {/* Total Pendapatan */}
+        {/* Summary Card */}
         <div className={`mb-6 p-4 rounded-lg shadow-md ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
-          <div className="flex justify-between items-center">
-            <h2 className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-gray-800'}`}>
-              Total Penerimaan
-            </h2>
-            <span className={`text-xl font-bold ${darkMode ? 'text-green-400' : 'text-green-600'}`}>
-              {formatRupiah(totalPenerimaan)}
-            </span>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className={`p-4 rounded-lg ${darkMode ? 'bg-blue-900' : 'bg-blue-50'}`}>
+              <h3 className={`text-lg font-medium mb-1 ${darkMode ? 'text-blue-300' : 'text-blue-800'}`}>
+                Jumlah Data
+              </h3>
+              <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-blue-600'}`}>
+                {loading ? '...' : data.length}
+              </p>
+            </div>
+            <div className={`p-4 rounded-lg ${darkMode ? 'bg-green-900' : 'bg-green-50'}`}>
+              <h3 className={`text-lg font-medium mb-1 ${darkMode ? 'text-green-300' : 'text-green-800'}`}>
+                Total Penerimaan
+              </h3>
+              <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-green-600'}`}>
+                {loading ? '...' : formatRupiah(totalPenerimaan)}
+              </p>
+            </div>
           </div>
         </div>
 
-        {/* Tabel Data */}
-        <div className={`rounded-lg shadow-md overflow-hidden ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className={darkMode ? 'bg-gray-700' : 'bg-gray-50'}>
+        {/* Table */}
+        <div className={`overflow-x-auto rounded-lg shadow-md ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
+          <table className="min-w-full divide-y divide-gray-200 table-fixed">
+            <thead className={darkMode ? 'bg-gray-700' : 'bg-gray-50'}>
+              <tr>
+                <th className={`px-3 py-2 text-left text-xs font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider w-[12%]`}>
+                  No. Penerimaan
+                </th>
+                <th className={`px-3 py-2 text-left text-xs font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider w-[15%]`}>
+                  Tanggal
+                </th>
+                <th className={`px-3 py-2 text-left text-xs font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider w-[15%]`}>
+                  No. Faktur
+                </th>
+                <th className={`px-3 py-2 text-left text-xs font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider w-[15%]`}>
+                  Supplier
+                </th>
+                <th 
+                  className={`px-3 py-2 text-left text-xs font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider cursor-pointer w-[15%]`}
+                  onClick={() => handleSort('total')}
+                >
+                  Total {renderSortIndicator('total')}
+                </th>
+              </tr>
+            </thead>
+            <tbody className={`divide-y divide-gray-200 ${darkMode ? 'bg-gray-800 divide-gray-700' : 'bg-white'}`}>
+              {loading ? (
                 <tr>
-                  <th 
-                    className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider cursor-pointer ${
-                      darkMode ? 'text-gray-300' : 'text-gray-500'
-                    }`}
-                    onClick={() => handleSort('tanggal_penerimaan')}
-                  >
-                    Tanggal {renderSortIndicator('tanggal_penerimaan')}
-                  </th>
-                  <th 
-                    className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider cursor-pointer ${
-                      darkMode ? 'text-gray-300' : 'text-gray-500'
-                    }`}
-                    onClick={() => handleSort('no_penerimaan')}
-                  >
-                    No. Penerimaan {renderSortIndicator('no_penerimaan')}
-                  </th>
-                  <th 
-                    className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider cursor-pointer ${
-                      darkMode ? 'text-gray-300' : 'text-gray-500'
-                    }`}
-                    onClick={() => handleSort('total')}
-                  >
-                    Total {renderSortIndicator('total')}
-                  </th>
+                  <td colSpan={5} className={`px-3 py-3 text-center ${darkMode ? 'text-gray-300' : 'text-gray-500'}`}>
+                    Memuat data...
+                  </td>
                 </tr>
-              </thead>
-              <tbody className={`divide-y ${darkMode ? 'divide-gray-700' : 'divide-gray-200'}`}>
-                {loading ? (
-                  <tr>
-                    <td 
-                      colSpan={3} 
-                      className={`px-6 py-4 text-center ${darkMode ? 'text-gray-300' : 'text-gray-500'}`}
-                    >
-                      Memuat data...
+              ) : sortedData.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className={`px-3 py-3 text-center ${darkMode ? 'text-gray-300' : 'text-gray-500'}`}>
+                    Tidak ada data untuk periode yang dipilih
+                  </td>
+                </tr>
+              ) : (
+                sortedData.map((item, index) => (
+                  <tr key={index} className={index % 2 === 0 
+                    ? (darkMode ? 'bg-gray-900' : 'bg-gray-50') 
+                    : (darkMode ? 'bg-gray-800' : 'bg-white')
+                  }>
+                    <td className={`px-3 py-2 whitespace-nowrap text-sm truncate ${darkMode ? 'text-gray-300' : 'text-gray-900'}`}>
+                      {item.no_penerimaan}
+                    </td>
+                    <td className={`px-3 py-2 whitespace-nowrap text-sm truncate ${darkMode ? 'text-gray-300' : 'text-gray-900'}`}>
+                      {formatTanggal(item.tanggal_penerimaan)}
+                    </td>
+                    <td className={`px-3 py-2 whitespace-nowrap text-sm truncate ${darkMode ? 'text-gray-300' : 'text-gray-900'}`}>
+                      {item.no_faktur}
+                    </td>
+                    <td className={`px-3 py-2 whitespace-nowrap text-sm truncate ${darkMode ? 'text-gray-300' : 'text-gray-900'}`}>
+                      {item.nama_supplier}
+                    </td>
+                    <td className={`px-3 py-2 whitespace-nowrap text-sm truncate ${darkMode ? 'text-green-400' : 'text-green-600'} font-medium`}>
+                      {formatRupiah(item.total)}
                     </td>
                   </tr>
-                ) : sortedData.length === 0 ? (
-                  <tr>
-                    <td 
-                      colSpan={3} 
-                      className={`px-6 py-4 text-center ${darkMode ? 'text-gray-300' : 'text-gray-500'}`}
-                    >
-                      Tidak ada data
-                    </td>
-                  </tr>
-                ) : (
-                  sortedData.map((item, index) => (
-                    <tr 
-                      key={index} 
-                      className={darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'}
-                    >
-                      <td 
-                        className={`px-6 py-4 whitespace-nowrap text-sm ${
-                          darkMode ? 'text-gray-300' : 'text-gray-500'
-                        }`}
-                      >
-                        {formatTanggal(item.tanggal_penerimaan)}
-                      </td>
-                      <td 
-                        className={`px-6 py-4 whitespace-nowrap text-sm ${
-                          darkMode ? 'text-gray-300' : 'text-gray-500'
-                        }`}
-                      >
-                        {item.no_penerimaan}
-                      </td>
-                      <td 
-                        className={`px-6 py-4 whitespace-nowrap text-sm font-medium ${
-                          darkMode ? 'text-green-400' : 'text-green-600'
-                        }`}
-                      >
-                        {formatRupiah(item.total)}
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* Info Data */}
-        <div className={`mt-4 text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-          Menampilkan {sortedData.length} dari {data.length} data
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
     </Layout>
   );
 };
 
-export default PenerimaanObat; 
+export default PenerimaanObat;

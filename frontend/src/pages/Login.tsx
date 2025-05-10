@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toggleDarkMode, getCurrentTheme } from '../utils/theme';
+import API_CONFIG from '../config/api';
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
@@ -90,7 +91,7 @@ const Login: React.FC = () => {
       }
       
       // Panggil API login
-      const response = await fetch('http://localhost:8080/api/auth/login', {
+      const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.AUTH.LOGIN}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
