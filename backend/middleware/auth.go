@@ -66,8 +66,32 @@ func AdminMiddleware(next http.HandlerFunc) http.HandlerFunc {
 // EnableCORS adalah middleware untuk menangani Cross-Origin Resource Sharing
 func EnableCORS(handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Dapatkan origin dari request
+		origin := r.Header.Get("Origin")
+
+		// Daftar origin yang diizinkan
+		allowedOrigins := []string{
+			"http://localhost:3000",
+			"http://127.0.0.1:3000",
+			"http://192.168.20.101:3000",
+			"http://192.168.20.101",
+			"http://localhost",
+			"http://127.0.0.1",
+		}
+
+		// Periksa apakah origin ada dalam daftar yang diizinkan
+		allowOrigin := "*" // Default ke semua jika tidak ada origin
+		if origin != "" {
+			for _, allowed := range allowedOrigins {
+				if allowed == origin {
+					allowOrigin = origin
+					break
+				}
+			}
+		}
+
 		// Set header CORS
-		w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000") // Sesuaikan dengan URL frontend Anda
+		w.Header().Set("Access-Control-Allow-Origin", allowOrigin)
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 		w.Header().Set("Access-Control-Allow-Credentials", "true")
