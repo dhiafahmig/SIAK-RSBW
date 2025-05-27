@@ -26,6 +26,14 @@ type LaporanRawatJalan struct {
 	BesarBayar    float64   `json:"besar_bayar"`
 }
 
+// LaporanPiutangPasien adalah model untuk hasil query laporan piutang pasien
+type LaporanPiutangPasien struct {
+	NoRawat      string  `json:"no_rawat"`
+	PngJawab     string  `json:"png_jawab"`
+	NamaBayar    string  `json:"nama_bayar"`
+	TotalPiutang float64 `json:"totalpiutang"`
+}
+
 // TanggalFilter adalah struktur untuk filter tanggal di request
 type TanggalFilter struct {
 	TanggalAwal  string `json:"tanggal_awal"`

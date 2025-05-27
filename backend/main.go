@@ -59,6 +59,9 @@ func main() {
 	// Route untuk laporan rawat jalan
 	mux.HandleFunc("/api/laporan/rawat-jalan", withCORS(handlers.RawatJalanHandler))
 
+	// Route untuk laporan piutang pasien
+	mux.HandleFunc("/api/laporan/piutang-pasien", withCORS(handlers.LaporanPiutangPasienHandler))
+
 	// Route untuk penjualan bebas obat
 	mux.HandleFunc("/api/laporan/penjualan-obat", withCORS(handlers.PenjualanBebasObatHandler))
 
