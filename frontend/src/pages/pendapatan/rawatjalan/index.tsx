@@ -20,14 +20,18 @@ const LaporanRawatJalan: React.FC = () => {
   
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<any[]>([]);
+  const [piutangData, setPiutangData] = useState<any[]>([]);
   const [sortedData, setSortedData] = useState<any[]>([]);
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const [sortBy, setSortBy] = useState<string | null>(null);
-  const [totalBayar, setTotalBayar] = useState(0);
+  const [totalBayarRawatJalan, setTotalBayarRawatJalan] = useState(0);
+  const [totalPiutang, setTotalPiutang] = useState(0);
+  const [totalPendapatan, setTotalPendapatan] = useState(0);
   const [filter, setFilter] = useState({
     tanggal_awal: '',
     tanggal_akhir: '',
     filter_by: 'tgl_registrasi', // Default filter berdasarkan tanggal registrasi
+    include_piutang: 'true', // Default include piutang
   });
   const [enableTransitions, setEnableTransitions] = useState(false);
   
@@ -75,6 +79,7 @@ const LaporanRawatJalan: React.FC = () => {
         tanggal_awal: awal,
         tanggal_akhir: akhir,
         filter_by: 'tgl_registrasi',
+        include_piutang: 'true',
       });
 
       // Ambil preferensi tema dari database
@@ -188,23 +193,66 @@ const LaporanRawatJalan: React.FC = () => {
   // Update sortedData ketika data berubah atau sorting berubah
   useEffect(() => {
     if (data.length > 0) {
-      let newData = [...data];
+      // Buat array gabungan data rawat jalan dengan piutang
+      const combinedData = data.map(item => {
+        // Cari data piutang yang sesuai dengan no_rawat
+        const matchingPiutang = piutangData.filter(p => p.no_rawat === item.no_rawat);
+        
+        // Hitung total piutang untuk pasien ini
+        const totalPiutangPasien = matchingPiutang.reduce((total, p) => total + p.totalpiutang, 0);
+        
+        // Ambil PNG Jawab dan Nama Bayar dari data piutang pertama jika ada
+        const pngJawab = matchingPiutang.length > 0 ? matchingPiutang[0].png_jawab : '';
+        const namaBayar = matchingPiutang.length > 0 ? matchingPiutang[0].nama_bayar : '';
+        
+        // Gabungkan data
+        return {
+          ...item,
+          totalPiutangPasien,
+          detailPiutang: matchingPiutang,
+          totalNilai: item.besar_bayar + totalPiutangPasien,
+          pngJawab,
+          namaBayar
+        };
+      });
+
+      // Sort data gabungan
+      const sorted = [...combinedData].sort((a, b) => {
+        // Jika tidak ada kolom sort, gunakan urutan default
+        if (!sortBy) return 0;
+        
+        // Untuk data tanggal
+        if (sortBy.includes('tgl') || sortBy === 'tanggal') {
+          const dateA = new Date(a[sortBy] || 0);
+          const dateB = new Date(b[sortBy] || 0);
+          
+          return sortDir === 'asc' 
+            ? dateA.getTime() - dateB.getTime() 
+            : dateB.getTime() - dateA.getTime();
+        }
+        
+        // Untuk angka (besar_bayar, totalPiutangPasien, totalNilai)
+        if (sortBy === 'besar_bayar' || sortBy === 'totalPiutangPasien' || sortBy === 'totalNilai') {
+          const numA = parseFloat(a[sortBy] || 0);
+          const numB = parseFloat(b[sortBy] || 0);
+          
+          return sortDir === 'asc' ? numA - numB : numB - numA;
+        }
+        
+        // Untuk string (default)
+        const strA = String(a[sortBy] || '').toLowerCase();
+        const strB = String(b[sortBy] || '').toLowerCase();
+        
+        return sortDir === 'asc' 
+          ? strA.localeCompare(strB) 
+          : strB.localeCompare(strA);
+      });
       
-      if (sortBy === 'besar_bayar') {
-        newData.sort((a, b) => {
-          if (sortDir === 'desc') {
-            return b.besar_bayar - a.besar_bayar;
-          } else {
-            return a.besar_bayar - b.besar_bayar;
-          }
-        });
-      }
-      
-      setSortedData(newData);
+      setSortedData(sorted);
     } else {
       setSortedData([]);
     }
-  }, [data, sortBy, sortDir]);
+  }, [data, piutangData, sortBy, sortDir]);
 
   // Fungsi untuk handle sorting
   const handleSort = (column: string) => {
@@ -229,16 +277,22 @@ const LaporanRawatJalan: React.FC = () => {
         params: {
           tanggal_awal: tanggalAwal,
           tanggal_akhir: tanggalAkhir,
-          filter_by: filter.filter_by
+          filter_by: filter.filter_by,
+          include_piutang: filter.include_piutang
         },
       });
 
       if (response.data.status === 'success') {
-        setData(response.data.data || []);
-        setTotalBayar(response.data.total_bayar || 0);
+        setData(response.data.data_rawat_jalan || []);
+        setPiutangData(response.data.data_piutang || []);
+        setTotalBayarRawatJalan(response.data.total_bayar_rawat_jalan || 0);
+        setTotalPiutang(response.data.total_piutang || 0);
+        setTotalPendapatan(response.data.total_pendapatan || 0);
         
         // Log response untuk debugging
-        console.log("Data diterima:", response.data.data.length, "records");
+        console.log("Response data:", response.data);
+        console.log("Data rawat jalan diterima:", response.data.data_rawat_jalan?.length || 0, "records");
+        console.log("Data piutang diterima:", response.data.data_piutang?.length || 0, "records");
         console.log("Filter yang digunakan:", response.data.filter);
       } else {
         throw new Error(response.data.message || 'Gagal mengambil data');
@@ -270,16 +324,22 @@ const LaporanRawatJalan: React.FC = () => {
         params: {
           tanggal_awal: filter.tanggal_awal,
           tanggal_akhir: filter.tanggal_akhir,
-          filter_by: filter.filter_by
+          filter_by: filter.filter_by,
+          include_piutang: filter.include_piutang
         },
       });
 
       if (response.data.status === 'success') {
-        setData(response.data.data || []);
-        setTotalBayar(response.data.total_bayar || 0);
+        setData(response.data.data_rawat_jalan || []);
+        setPiutangData(response.data.data_piutang || []);
+        setTotalBayarRawatJalan(response.data.total_bayar_rawat_jalan || 0);
+        setTotalPiutang(response.data.total_piutang || 0);
+        setTotalPendapatan(response.data.total_pendapatan || 0);
         
         // Log response untuk debugging
-        console.log("Data diterima:", response.data.data.length, "records");
+        console.log("Response data:", response.data);
+        console.log("Data rawat jalan diterima:", response.data.data_rawat_jalan?.length || 0, "records");
+        console.log("Data piutang diterima:", response.data.data_piutang?.length || 0, "records");
         console.log("Filter yang digunakan:", response.data.filter);
       } else {
         throw new Error(response.data.message || 'Gagal mengambil data');
@@ -301,7 +361,7 @@ const LaporanRawatJalan: React.FC = () => {
   };
 
   // Handle perubahan input filter
-  const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     console.log(`Filter berubah: ${name} = ${value}`);
     setFilter(prev => ({
@@ -422,59 +482,53 @@ const LaporanRawatJalan: React.FC = () => {
                 />
               </div>
             </div>
-            <div className="mb-4">
-              <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                Filter Berdasarkan
-              </label>
-              <div className="flex gap-4">
-                <div className="flex items-center">
-                  <input
-                    type="radio"
-                    id="filter-registrasi"
-                    name="filter_by"
-                    value="tgl_registrasi"
-                    checked={filter.filter_by === 'tgl_registrasi'}
-                    onChange={handleFilterChange}
-                    className={`mr-2 ${darkMode ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-300'}`}
-                  />
-                  <label htmlFor="filter-registrasi" className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                    Tanggal Registrasi
-                  </label>
-                </div>
-                <div className="flex items-center">
-                  <input
-                    type="radio"
-                    id="filter-bayar"
-                    name="filter_by"
-                    value="tgl_bayar"
-                    checked={filter.filter_by === 'tgl_bayar'}
-                    onChange={handleFilterChange}
-                    className={`mr-2 ${darkMode ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-300'}`}
-                  />
-                  <label htmlFor="filter-bayar" className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                    Tanggal Bayar
-                  </label>
-                </div>
-                <div className="flex items-center">
-                  <input
-                    type="radio"
-                    id="filter-both"
-                    name="filter_by"
-                    value="both"
-                    checked={filter.filter_by === 'both'}
-                    onChange={handleFilterChange}
-                    className={`mr-2 ${darkMode ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-300'}`}
-                  />
-                  <label htmlFor="filter-both" className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                    Kedua Tanggal
-                  </label>
-                </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div>
+                <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                  Filter Berdasarkan
+                </label>
+                <select
+                  name="filter_by"
+                  value={filter.filter_by}
+                  onChange={handleFilterChange}
+                  className={`w-full p-2 border rounded ${darkMode 
+                    ? 'bg-gray-700 border-gray-600 text-white' 
+                    : 'bg-white border-gray-300 text-gray-900'
+                  }`}
+                >
+                  <option value="tgl_registrasi">Tanggal Registrasi</option>
+                  <option value="tgl_bayar">Tanggal Bayar</option>
+                  <option value="both">Kedua Tanggal</option>
+                </select>
+              </div>
+              
+              <div>
+                <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                  Tampilkan Detail Piutang
+                </label>
+                <select
+                  name="include_piutang"
+                  value={filter.include_piutang}
+                  onChange={handleFilterChange}
+                  className={`w-full p-2 border rounded ${darkMode 
+                    ? 'bg-gray-700 border-gray-600 text-white' 
+                    : 'bg-white border-gray-300 text-gray-900'
+                  }`}
+                >
+                  <option value="true">Ya</option>
+                  <option value="false">Tidak</option>
+                </select>
               </div>
             </div>
+            
             <div className="flex justify-end">
-              <button
+              <button 
                 type="submit"
-                className={`px-4 py-2 rounded-md ${darkMode ? 'bg-blue-600 hover:bg-blue-700' : 'bg-blue-500 hover:bg-blue-600'} text-white focus:outline-none`}
+                className={`px-4 py-2 rounded ${darkMode 
+                  ? 'bg-blue-600 hover:bg-blue-700 text-white' 
+                  : 'bg-blue-500 hover:bg-blue-600 text-white'
+                } transition-colors`}
               >
                 Terapkan Filter
               </button>
@@ -482,15 +536,23 @@ const LaporanRawatJalan: React.FC = () => {
           </form>
         </div>
 
-        {/* Summary Card */}
+        {/* Summary Cards */}
         <div className={`mb-6 p-4 rounded-lg shadow-md ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className={`p-4 rounded-lg ${darkMode ? 'bg-blue-900' : 'bg-blue-50'}`}>
               <h3 className={`text-lg font-medium mb-1 ${darkMode ? 'text-blue-300' : 'text-blue-800'}`}>
-                Jumlah Data
+                Pendapatan Rawat Jalan
               </h3>
               <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-blue-600'}`}>
-                {loading ? '...' : data.length}
+                {loading ? '...' : formatRupiah(totalBayarRawatJalan)}
+              </p>
+            </div>
+            <div className={`p-4 rounded-lg ${darkMode ? 'bg-purple-900' : 'bg-purple-50'}`}>
+              <h3 className={`text-lg font-medium mb-1 ${darkMode ? 'text-purple-300' : 'text-purple-800'}`}>
+                Total Piutang
+              </h3>
+              <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-purple-600'}`}>
+                {loading ? '...' : formatRupiah(totalPiutang)}
               </p>
             </div>
             <div className={`p-4 rounded-lg ${darkMode ? 'bg-green-900' : 'bg-green-50'}`}>
@@ -498,7 +560,7 @@ const LaporanRawatJalan: React.FC = () => {
                 Total Pendapatan
               </h3>
               <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-green-600'}`}>
-                {loading ? '...' : formatRupiah(totalBayar)}
+                {loading ? '...' : formatRupiah(totalPendapatan)}
               </p>
             </div>
           </div>
@@ -506,49 +568,73 @@ const LaporanRawatJalan: React.FC = () => {
 
         {/* Table */}
         <div className={`overflow-x-auto rounded-lg shadow-md ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
-          <table className="min-w-full divide-y divide-gray-200 table-fixed">
+          <table className="w-full divide-y divide-gray-200">
             <thead className={darkMode ? 'bg-gray-700' : 'bg-gray-50'}>
               <tr>
-                <th className={`px-3 py-2 text-left text-xs font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider w-[12%]`}>
+                <th className={`px-2 py-2 text-left text-xs font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`} style={{ width: '7%' }}>
                   No. Rawat
                 </th>
-                <th className={`px-3 py-2 text-left text-xs font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider w-[10%]`}>
+                <th className={`px-2 py-2 text-left text-xs font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`} style={{ width: '5%' }}>
                   No. RM
                 </th>
-                <th className={`px-3 py-2 text-left text-xs font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider w-[15%]`}>
+                <th className={`px-2 py-2 text-left text-xs font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`} style={{ width: '15%' }}>
                   Nama Pasien
                 </th>
-                <th className={`px-3 py-2 text-left text-xs font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider w-[13%]`}>
+                <th className={`px-2 py-2 text-left text-xs font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`} style={{ width: '8%' }}>
                   Tgl Registrasi
                 </th>
-                <th className={`px-3 py-2 text-left text-xs font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider w-[13%]`}>
+                <th className={`px-2 py-2 text-left text-xs font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`} style={{ width: '10%' }}>
                   Poliklinik
                 </th>
-                <th className={`px-3 py-2 text-left text-xs font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider w-[10%]`}>
+                <th className={`px-2 py-2 text-left text-xs font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`} style={{ width: '6%' }}>
                   No. Nota
                 </th>
-                <th className={`px-3 py-2 text-left text-xs font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider w-[13%]`}>
+                <th className={`px-2 py-2 text-left text-xs font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`} style={{ width: '8%' }}>
                   Tgl Bayar
                 </th>
                 <th 
-                  className={`px-3 py-2 text-left text-xs font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider cursor-pointer w-[14%]`}
+                  className={`px-2 py-2 text-left text-xs font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider cursor-pointer`}
                   onClick={() => handleSort('besar_bayar')}
+                  style={{ width: '9%' }}
                 >
-                  Besar Bayar {renderSortIndicator('besar_bayar')}
+                  Bayar Tunai {renderSortIndicator('besar_bayar')}
+                </th>
+                <th className={`px-2 py-2 text-left text-xs font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`} style={{ width: '10%' }}>
+                  PNG Jawab
+                </th>
+                <th className={`px-2 py-2 text-left text-xs font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`} style={{ width: '10%' }}>
+                  Nama Bayar
+                </th>
+                <th 
+                  className={`px-2 py-2 text-left text-xs font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider cursor-pointer`}
+                  onClick={() => handleSort('totalPiutangPasien')}
+                  style={{ width: '7%' }}
+                >
+                  Piutang {renderSortIndicator('totalPiutangPasien')}
+                </th>
+                <th 
+                  className={`px-2 py-2 text-left text-xs font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider cursor-pointer`}
+                  onClick={() => handleSort('totalNilai')}
+                  style={{ width: '7%' }}
+                >
+                  Total {renderSortIndicator('totalNilai')}
                 </th>
               </tr>
             </thead>
-            <tbody className={`divide-y divide-gray-200 ${darkMode ? 'bg-gray-800 divide-gray-700' : 'bg-white'}`}>
+            <tbody className="divide-y divide-gray-200">
               {loading ? (
                 <tr>
-                  <td colSpan={8} className={`px-3 py-3 text-center ${darkMode ? 'text-gray-300' : 'text-gray-500'}`}>
-                    Memuat data...
+                  <td colSpan={12} className="text-center py-4">
+                    <div className="flex justify-center items-center space-x-2">
+                      <div className={`animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 ${darkMode ? 'border-blue-400' : 'border-blue-600'}`}></div>
+                      <span className={darkMode ? 'text-gray-300' : 'text-gray-700'}>Memuat data...</span>
+                    </div>
                   </td>
                 </tr>
               ) : sortedData.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className={`px-3 py-3 text-center ${darkMode ? 'text-gray-300' : 'text-gray-500'}`}>
-                    Tidak ada data untuk periode yang dipilih
+                  <td colSpan={12} className={`text-center py-4 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                    Tidak ada data yang tersedia
                   </td>
                 </tr>
               ) : (
@@ -557,29 +643,41 @@ const LaporanRawatJalan: React.FC = () => {
                     ? (darkMode ? 'bg-gray-900' : 'bg-gray-50') 
                     : (darkMode ? 'bg-gray-800' : 'bg-white')
                   }>
-                    <td className={`px-3 py-2 whitespace-nowrap text-sm truncate ${darkMode ? 'text-gray-300' : 'text-gray-900'}`}>
+                    <td className={`px-2 py-2 text-sm ${darkMode ? 'text-gray-300' : 'text-gray-900'}`}>
                       {item.no_rawat}
                     </td>
-                    <td className={`px-3 py-2 whitespace-nowrap text-sm truncate ${darkMode ? 'text-gray-300' : 'text-gray-900'}`}>
+                    <td className={`px-2 py-2 text-sm ${darkMode ? 'text-gray-300' : 'text-gray-900'}`}>
                       {item.no_rkm_medis}
                     </td>
-                    <td className={`px-3 py-2 whitespace-nowrap text-sm truncate ${darkMode ? 'text-gray-300' : 'text-gray-900'}`}>
+                    <td className={`px-2 py-2 text-sm ${darkMode ? 'text-gray-300' : 'text-gray-900'}`}>
                       {item.nm_pasien}
                     </td>
-                    <td className={`px-3 py-2 whitespace-nowrap text-sm truncate ${darkMode ? 'text-gray-300' : 'text-gray-900'}`}>
+                    <td className={`px-2 py-2 text-sm ${darkMode ? 'text-gray-300' : 'text-gray-900'}`}>
                       {formatTanggal(item.tgl_registrasi)}
                     </td>
-                    <td className={`px-3 py-2 whitespace-nowrap text-sm truncate ${darkMode ? 'text-gray-300' : 'text-gray-900'}`}>
-                      {item.nm_poli || '-'}
+                    <td className={`px-2 py-2 text-sm ${darkMode ? 'text-gray-300' : 'text-gray-900'}`}>
+                      {item.nm_poli}
                     </td>
-                    <td className={`px-3 py-2 whitespace-nowrap text-sm truncate ${darkMode ? 'text-gray-300' : 'text-gray-900'}`}>
+                    <td className={`px-2 py-2 text-sm ${darkMode ? 'text-gray-300' : 'text-gray-900'}`}>
                       {item.no_nota || '-'}
                     </td>
-                    <td className={`px-3 py-2 whitespace-nowrap text-sm truncate ${darkMode ? 'text-gray-300' : 'text-gray-900'}`}>
+                    <td className={`px-2 py-2 text-sm ${darkMode ? 'text-gray-300' : 'text-gray-900'}`}>
                       {formatTanggal(item.tgl_bayar)}
                     </td>
-                    <td className={`px-3 py-2 whitespace-nowrap text-sm truncate ${darkMode ? 'text-green-400' : 'text-green-600'} font-medium`}>
+                    <td className={`px-2 py-2 text-sm ${darkMode ? 'text-blue-400' : 'text-blue-600'} font-medium`}>
                       {formatRupiah(item.besar_bayar)}
+                    </td>
+                    <td className={`px-2 py-2 text-sm ${darkMode ? 'text-gray-300' : 'text-gray-900'}`}>
+                      {item.pngJawab || '-'}
+                    </td>
+                    <td className={`px-2 py-2 text-sm ${darkMode ? 'text-gray-300' : 'text-gray-900'}`}>
+                      {item.namaBayar || '-'}
+                    </td>
+                    <td className={`px-2 py-2 text-sm ${darkMode ? 'text-purple-400' : 'text-purple-600'} font-medium`}>
+                      {formatRupiah(item.totalPiutangPasien || 0)}
+                    </td>
+                    <td className={`px-2 py-2 text-sm ${darkMode ? 'text-green-400' : 'text-green-600'} font-medium`}>
+                      {formatRupiah((item.besar_bayar || 0) + (item.totalPiutangPasien || 0))}
                     </td>
                   </tr>
                 ))
