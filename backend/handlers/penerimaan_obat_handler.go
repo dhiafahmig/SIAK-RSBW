@@ -71,11 +71,15 @@ func PenerimaanObatHandler(w http.ResponseWriter, r *http.Request) {
 		SELECT
 			pemesanan.tgl_pesan AS tanggal_penerimaan,
 			pemesanan.no_faktur AS no_penerimaan,
+			datasuplier.kode_suplier AS kode_supplier,
+			datasuplier.nama_suplier AS nama_supplier,
 			SUM(detailpesan.jumlah * detailpesan.h_pesan) AS total
 		FROM
 			pemesanan
 		INNER JOIN 
 			detailpesan ON detailpesan.no_faktur = pemesanan.no_faktur
+		INNER JOIN
+			datasuplier ON datasuplier.kode_suplier = pemesanan.kode_suplier
 		WHERE
 			pemesanan.tgl_pesan BETWEEN ? AND ?
 		GROUP BY

@@ -374,8 +374,8 @@ const PenerimaanObat: React.FC = () => {
                 <th className={`px-3 py-2 text-left text-xs font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider w-[15%]`}>
                   Tanggal
                 </th>
-                <th className={`px-3 py-2 text-left text-xs font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider w-[15%]`}>
-                  No. Faktur
+                <th className={`px-3 py-2 text-left text-xs font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider w-[10%]`}>
+                  Kode Supplier
                 </th>
                 <th className={`px-3 py-2 text-left text-xs font-medium ${darkMode ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider w-[15%]`}>
                   Supplier
@@ -414,7 +414,7 @@ const PenerimaanObat: React.FC = () => {
                       {formatTanggal(item.tanggal_penerimaan)}
                     </td>
                     <td className={`px-3 py-2 whitespace-nowrap text-sm truncate ${darkMode ? 'text-gray-300' : 'text-gray-900'}`}>
-                      {item.no_faktur}
+                      {item.kode_supplier}
                     </td>
                     <td className={`px-3 py-2 whitespace-nowrap text-sm truncate ${darkMode ? 'text-gray-300' : 'text-gray-900'}`}>
                       {item.nama_supplier}

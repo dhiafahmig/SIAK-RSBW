@@ -13,6 +13,7 @@ type PenjualanBebasObat struct {
 type PenerimaanObat struct {
 	NoPenerimaan      string    `json:"no_penerimaan"`
 	TanggalPenerimaan time.Time `json:"tanggal_penerimaan"`
+	KodeSupplier      string    `json:"kode_supplier"`
 	NamaObat          string    `json:"nama_obat"`
 	NamaSupplier      string    `json:"nama_supplier"`
 	Jumlah            int       `json:"jumlah"`
