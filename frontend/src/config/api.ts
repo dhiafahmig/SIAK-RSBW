@@ -1,6 +1,6 @@
 // Konfigurasi API
 const API_CONFIG = {
-  BASE_URL: process.env.REACT_APP_API_URL || 'http://192.168.20.101:8080',
+  BASE_URL: process.env.REACT_APP_API_URL || 'http://localhost:8080' || 'http://192.168.20.101:8080',
   ENDPOINTS: {
     AUTH: {
       LOGIN: '/api/auth/login',

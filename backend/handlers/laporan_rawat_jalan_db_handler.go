@@ -75,10 +75,10 @@ func RawatJalanHandler(w http.ResponseWriter, r *http.Request) {
 	// Query SQL
 	var query string
 
-	// Buat query berdasarkan filter
+	// Buat query berdasarkan filter dengan optimasi untuk kecepatan
 	if filterBy == "tgl_bayar" {
 		query = `
-			SELECT DISTINCT
+			SELECT 
 				reg_periksa.no_rawat,
 				pasien.no_rkm_medis,
 				pasien.nm_pasien,
@@ -86,22 +86,25 @@ func RawatJalanHandler(w http.ResponseWriter, r *http.Request) {
 				poliklinik.nm_poli,
 				nota_jalan.no_nota,
 				nota_jalan.tanggal as tgl_bayar,
-				detail_nota_jalan.besar_bayar
+				COALESCE(detail_nota_jalan.besar_bayar, 0) as besar_bayar,
+				penjab.png_jawab,
+				reg_periksa.kd_pj
 			FROM
-				reg_periksa
+				reg_periksa USE INDEX (status_lanjut)
 			INNER JOIN pasien ON reg_periksa.no_rkm_medis = pasien.no_rkm_medis
 			INNER JOIN poliklinik ON reg_periksa.kd_poli = poliklinik.kd_poli
+			INNER JOIN penjab ON reg_periksa.kd_pj = penjab.kd_pj
 			LEFT JOIN nota_jalan ON nota_jalan.no_rawat = reg_periksa.no_rawat
 			LEFT JOIN detail_nota_jalan ON detail_nota_jalan.no_rawat = reg_periksa.no_rawat
 			WHERE
 				nota_jalan.tanggal BETWEEN ? AND ?
 				AND reg_periksa.status_lanjut = 'Ralan'
-			GROUP BY
-				reg_periksa.no_rawat
+			ORDER BY detail_nota_jalan.besar_bayar DESC
+			LIMIT 300
 		`
 	} else if filterBy == "tgl_registrasi" {
 		query = `
-			SELECT DISTINCT
+			SELECT 
 				reg_periksa.no_rawat,
 				pasien.no_rkm_medis,
 				pasien.nm_pasien,
@@ -109,23 +112,26 @@ func RawatJalanHandler(w http.ResponseWriter, r *http.Request) {
 				poliklinik.nm_poli,
 				nota_jalan.no_nota,
 				nota_jalan.tanggal as tgl_bayar,
-				detail_nota_jalan.besar_bayar
+				COALESCE(detail_nota_jalan.besar_bayar, 0) as besar_bayar,
+				penjab.png_jawab,
+				reg_periksa.kd_pj
 			FROM
-				reg_periksa
+				reg_periksa USE INDEX (tgl_registrasi, status_lanjut)
 			INNER JOIN pasien ON reg_periksa.no_rkm_medis = pasien.no_rkm_medis
 			INNER JOIN poliklinik ON reg_periksa.kd_poli = poliklinik.kd_poli
+			INNER JOIN penjab ON reg_periksa.kd_pj = penjab.kd_pj
 			LEFT JOIN nota_jalan ON nota_jalan.no_rawat = reg_periksa.no_rawat
 			LEFT JOIN detail_nota_jalan ON detail_nota_jalan.no_rawat = reg_periksa.no_rawat
 			WHERE
 				reg_periksa.tgl_registrasi BETWEEN ? AND ?
 				AND reg_periksa.status_lanjut = 'Ralan'
-			GROUP BY
-				reg_periksa.no_rawat
+			ORDER BY penjab.png_jawab LIKE '%BPJS%' DESC, detail_nota_jalan.besar_bayar DESC
+			LIMIT 300
 		`
 	} else {
 		// Query default atau filterBy=both (filter by tgl_registrasi OR tgl_bayar)
 		query = `
-			SELECT DISTINCT
+			SELECT 
 				reg_periksa.no_rawat,
 				pasien.no_rkm_medis,
 				pasien.nm_pasien,
@@ -133,19 +139,21 @@ func RawatJalanHandler(w http.ResponseWriter, r *http.Request) {
 				poliklinik.nm_poli,
 				nota_jalan.no_nota,
 				nota_jalan.tanggal as tgl_bayar,
-				detail_nota_jalan.besar_bayar
+				COALESCE(detail_nota_jalan.besar_bayar, 0) as besar_bayar,
+				penjab.png_jawab,
+				reg_periksa.kd_pj
 			FROM
-				reg_periksa
+				reg_periksa USE INDEX (tgl_registrasi, status_lanjut)
 			INNER JOIN pasien ON reg_periksa.no_rkm_medis = pasien.no_rkm_medis
 			INNER JOIN poliklinik ON reg_periksa.kd_poli = poliklinik.kd_poli
+			INNER JOIN penjab ON reg_periksa.kd_pj = penjab.kd_pj
 			LEFT JOIN nota_jalan ON nota_jalan.no_rawat = reg_periksa.no_rawat
 			LEFT JOIN detail_nota_jalan ON detail_nota_jalan.no_rawat = reg_periksa.no_rawat
 			WHERE
-				(reg_periksa.tgl_registrasi BETWEEN ? AND ?)
-				OR (nota_jalan.tanggal BETWEEN ? AND ?)
+				reg_periksa.tgl_registrasi BETWEEN ? AND ?
 				AND reg_periksa.status_lanjut = 'Ralan'
-			GROUP BY
-				reg_periksa.no_rawat
+			ORDER BY penjab.png_jawab LIKE '%BPJS%' DESC, detail_nota_jalan.besar_bayar DESC
+			LIMIT 300
 		`
 	}
 
@@ -158,18 +166,18 @@ func RawatJalanHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Printf("Parameter: tanggal_awal=%s, tanggal_akhir=%s\n", tanggalAwal, tanggalAkhir)
 
 	var queryErr error
-	if filterBy == "tgl_bayar" || filterBy == "tgl_registrasi" {
+	if filterBy == "tgl_bayar" {
 		queryErr = db.Raw(query,
-			tanggalAwal,
-			tanggalAkhir,
+			tanggalAwal, tanggalAkhir, // Parameter untuk nota_jalan.tanggal
+		).Scan(&result).Error
+	} else if filterBy == "tgl_registrasi" {
+		queryErr = db.Raw(query,
+			tanggalAwal, tanggalAkhir, // Parameter untuk reg_periksa.tgl_registrasi
 		).Scan(&result).Error
 	} else {
-		// Untuk filter "both", tetap menggunakan 4 parameter
+		// Untuk filter "both", gunakan 2 parameter untuk satu query
 		queryErr = db.Raw(query,
-			tanggalAwal,
-			tanggalAkhir,
-			tanggalAwal,
-			tanggalAkhir,
+			tanggalAwal, tanggalAkhir, // Parameter untuk reg_periksa.tgl_registrasi
 		).Scan(&result).Error
 	}
 
@@ -186,258 +194,159 @@ func RawatJalanHandler(w http.ResponseWriter, r *http.Request) {
 		result = []models.LaporanRawatJalan{}
 	}
 
-	// Hitung total pembayaran rawat jalan
+	// Query untuk total pembayaran rawat jalan (dipisahkan untuk performa lebih baik)
 	var totalBayarRawatJalan float64
-	for _, item := range result {
-		totalBayarRawatJalan += item.BesarBayar
+	var totalQuery string
+
+	if filterBy == "tgl_bayar" {
+		totalQuery = `
+			SELECT COALESCE(SUM(detail_nota_jalan.besar_bayar), 0) as total
+			FROM reg_periksa USE INDEX (status_lanjut)
+			INNER JOIN nota_jalan ON nota_jalan.no_rawat = reg_periksa.no_rawat
+			LEFT JOIN detail_nota_jalan ON detail_nota_jalan.no_rawat = reg_periksa.no_rawat
+			WHERE nota_jalan.tanggal BETWEEN ? AND ?
+			AND reg_periksa.status_lanjut = 'Ralan'
+		`
+	} else if filterBy == "tgl_registrasi" {
+		totalQuery = `
+			SELECT COALESCE(SUM(detail_nota_jalan.besar_bayar), 0) as total
+			FROM reg_periksa USE INDEX (tgl_registrasi, status_lanjut)
+			LEFT JOIN nota_jalan ON nota_jalan.no_rawat = reg_periksa.no_rawat
+			LEFT JOIN detail_nota_jalan ON detail_nota_jalan.no_rawat = reg_periksa.no_rawat
+			WHERE reg_periksa.tgl_registrasi BETWEEN ? AND ?
+			AND reg_periksa.status_lanjut = 'Ralan'
+		`
+	} else {
+		totalQuery = `
+			SELECT COALESCE(SUM(detail_nota_jalan.besar_bayar), 0) as total
+			FROM reg_periksa USE INDEX (tgl_registrasi, status_lanjut)
+			LEFT JOIN nota_jalan ON nota_jalan.no_rawat = reg_periksa.no_rawat
+			LEFT JOIN detail_nota_jalan ON detail_nota_jalan.no_rawat = reg_periksa.no_rawat
+			WHERE reg_periksa.tgl_registrasi BETWEEN ? AND ?
+			AND reg_periksa.status_lanjut = 'Ralan'
+		`
 	}
 
-	// Tambahkan data piutang pasien
+	var totalResult struct {
+		Total float64
+	}
+
+	var totalQueryErr error
+	if filterBy == "tgl_bayar" || filterBy == "tgl_registrasi" {
+		totalQueryErr = db.Raw(totalQuery, tanggalAwal, tanggalAkhir).Scan(&totalResult).Error
+	} else {
+		totalQueryErr = db.Raw(totalQuery, tanggalAwal, tanggalAkhir).Scan(&totalResult).Error
+	}
+
+	if totalQueryErr == nil {
+		totalBayarRawatJalan = totalResult.Total
+	} else {
+		fmt.Printf("Gagal menjalankan query total: %v\n", totalQueryErr)
+		// Hitung dari hasil yang ada jika query gagal
+		for _, item := range result {
+			totalBayarRawatJalan += item.BesarBayar
+		}
+	}
+
+	// Tambahkan data piutang pasien - optimasi query piutang
 	var piutangResults []models.LaporanPiutangPasien
 	var totalPiutang float64
 
-	// Query SQL untuk piutang pasien dengan alias yang jelas untuk setiap kolom
-	piutangQuery := `
-		SELECT
-			reg_periksa.no_rawat AS no_rawat, 
-			penjab.png_jawab AS png_jawab, 
-			detail_piutang_pasien.nama_bayar AS nama_bayar, 
-			CAST(detail_piutang_pasien.totalpiutang AS DECIMAL(15,2)) AS totalpiutang
-		FROM
-			reg_periksa
-			INNER JOIN piutang_pasien ON reg_periksa.no_rawat = piutang_pasien.no_rawat
-			INNER JOIN detail_piutang_pasien ON reg_periksa.no_rawat = detail_piutang_pasien.no_rawat
-			INNER JOIN penjab ON detail_piutang_pasien.kd_pj = penjab.kd_pj
-		WHERE
-			piutang_pasien.tgl_piutang BETWEEN ? AND ?
-			AND reg_periksa.status_lanjut = 'Ralan'  -- Filter hanya untuk rawat jalan
+	// Query SQL untuk total piutang (tanpa detail untuk kecepatan)
+	piutangTotalQuery := `
+		SELECT COALESCE(SUM(CAST(detail_piutang_pasien.totalpiutang AS DECIMAL(15,2))), 0) as total
+		FROM reg_periksa USE INDEX (status_lanjut)
+		INNER JOIN piutang_pasien ON reg_periksa.no_rawat = piutang_pasien.no_rawat
+		INNER JOIN detail_piutang_pasien ON reg_periksa.no_rawat = detail_piutang_pasien.no_rawat
+		WHERE piutang_pasien.tgl_piutang BETWEEN ? AND ?
+		AND reg_periksa.status_lanjut = 'Ralan'
 	`
 
-	// Eksekusi query menggunakan map untuk melihat data mentah dari database
-	var rawPiutangResults []map[string]interface{}
-	piutangQueryErr := db.Raw(piutangQuery, tanggalAwal, tanggalAkhir).Scan(&rawPiutangResults).Error
-	if piutangQueryErr != nil {
-		fmt.Printf("Gagal menjalankan query piutang: %v\n", piutangQueryErr)
-		// Lanjutkan dengan data rawat jalan saja jika query piutang gagal
+	var piutangTotalResult struct {
+		Total float64
+	}
+
+	piutangTotalErr := db.Raw(piutangTotalQuery, tanggalAwal, tanggalAkhir).Scan(&piutangTotalResult).Error
+	if piutangTotalErr == nil {
+		totalPiutang = piutangTotalResult.Total
 	} else {
-		// Konversi hasil mentah ke struct LaporanPiutangPasien
-		for _, raw := range rawPiutangResults {
-			var piutang float64
+		fmt.Printf("Gagal menjalankan query total piutang: %v\n", piutangTotalErr)
+	}
 
-			// Coba ekstrak nilai totalpiutang dengan berbagai cara
-			if val, ok := raw["totalpiutang"]; ok {
-				switch v := val.(type) {
-				case float64:
-					piutang = v
-				case float32:
-					piutang = float64(v)
-				case int64:
-					piutang = float64(v)
-				case int:
-					piutang = float64(v)
-				case string:
-					fmt.Sscanf(v, "%f", &piutang)
-				case []uint8:
-					// Konversi []uint8 ke string lalu ke float64
-					str := string(v)
-					fmt.Sscanf(str, "%f", &piutang)
-				case map[string]interface{}:
-					// Jika nilai adalah map, coba ambil sebagai float
-					if floatVal, ok := v["value"].(float64); ok {
-						piutang = floatVal
+	// Hanya ambil detail piutang jika includePiutang = true
+	if includePiutang == "true" {
+		// Query SQL untuk piutang pasien dengan alias yang jelas untuk setiap kolom
+		piutangQuery := `
+			SELECT
+				reg_periksa.no_rawat AS no_rawat, 
+				penjab.png_jawab AS png_jawab, 
+				detail_piutang_pasien.nama_bayar AS nama_bayar, 
+				CAST(detail_piutang_pasien.totalpiutang AS DECIMAL(15,2)) AS totalpiutang
+			FROM
+				reg_periksa USE INDEX (status_lanjut)
+				INNER JOIN piutang_pasien ON reg_periksa.no_rawat = piutang_pasien.no_rawat
+				INNER JOIN detail_piutang_pasien ON reg_periksa.no_rawat = detail_piutang_pasien.no_rawat
+				INNER JOIN penjab ON detail_piutang_pasien.kd_pj = penjab.kd_pj
+			WHERE
+				piutang_pasien.tgl_piutang BETWEEN ? AND ?
+				AND reg_periksa.status_lanjut = 'Ralan'
+			LIMIT 500
+		`
+
+		// Eksekusi query menggunakan map untuk melihat data mentah dari database
+		var rawPiutangResults []map[string]interface{}
+		piutangQueryErr := db.Raw(piutangQuery, tanggalAwal, tanggalAkhir).Scan(&rawPiutangResults).Error
+		if piutangQueryErr != nil {
+			fmt.Printf("Gagal menjalankan query piutang: %v\n", piutangQueryErr)
+			// Lanjutkan dengan data rawat jalan saja jika query piutang gagal
+		} else {
+			// Konversi hasil mentah ke struct LaporanPiutangPasien
+			for _, raw := range rawPiutangResults {
+				var piutang float64
+
+				// Coba ekstrak nilai totalpiutang dengan berbagai cara
+				if val, ok := raw["totalpiutang"]; ok {
+					switch v := val.(type) {
+					case float64:
+						piutang = v
+					case float32:
+						piutang = float64(v)
+					case int64:
+						piutang = float64(v)
+					case int:
+						piutang = float64(v)
+					case string:
+						fmt.Sscanf(v, "%f", &piutang)
+					case []uint8:
+						// Konversi []uint8 ke string lalu ke float64
+						str := string(v)
+						fmt.Sscanf(str, "%f", &piutang)
+					case map[string]interface{}:
+						// Jika nilai adalah map, coba ambil sebagai float
+						if floatVal, ok := v["value"].(float64); ok {
+							piutang = floatVal
+						}
+					case nil:
+						// Abaikan nilai nil
+						piutang = 0
+					default:
+						fmt.Printf("Tipe data tidak dikenali untuk totalpiutang: %T dengan nilai %v\n", v, v)
 					}
-				case nil:
-					// Abaikan nilai nil
-					piutang = 0
-				default:
-					fmt.Printf("Tipe data tidak dikenali untuk totalpiutang: %T dengan nilai %v\n", v, v)
 				}
-			}
 
-			item := models.LaporanPiutangPasien{
-				NoRawat:      fmt.Sprintf("%v", raw["no_rawat"]),
-				PngJawab:     fmt.Sprintf("%v", raw["png_jawab"]),
-				NamaBayar:    fmt.Sprintf("%v", raw["nama_bayar"]),
-				TotalPiutang: piutang,
-			}
-			piutangResults = append(piutangResults, item)
-			totalPiutang += piutang
-		}
-
-		// Jika total piutang masih 0 dan ada data piutang, coba query sum
-		if totalPiutang == 0 && len(piutangResults) > 0 {
-			var sumResult struct {
-				Total float64
-			}
-
-			sumQuery := `
-				SELECT SUM(CAST(detail_piutang_pasien.totalpiutang AS DECIMAL(15,2))) as total
-				FROM
-					reg_periksa
-					INNER JOIN piutang_pasien ON reg_periksa.no_rawat = piutang_pasien.no_rawat
-					INNER JOIN detail_piutang_pasien ON reg_periksa.no_rawat = detail_piutang_pasien.no_rawat
-					INNER JOIN penjab ON detail_piutang_pasien.kd_pj = penjab.kd_pj
-				WHERE
-					piutang_pasien.tgl_piutang BETWEEN ? AND ?
-					AND reg_periksa.status_lanjut = 'Ralan'  -- Filter hanya untuk rawat jalan
-			`
-
-			sumErr := db.Raw(sumQuery, tanggalAwal, tanggalAkhir).Scan(&sumResult).Error
-			if sumErr == nil {
-				totalPiutang = sumResult.Total
-			} else {
-				fmt.Printf("Gagal menjalankan query sum piutang: %v\n", sumErr)
+				item := models.LaporanPiutangPasien{
+					NoRawat:      fmt.Sprintf("%v", raw["no_rawat"]),
+					PngJawab:     fmt.Sprintf("%v", raw["png_jawab"]),
+					NamaBayar:    fmt.Sprintf("%v", raw["nama_bayar"]),
+					TotalPiutang: piutang,
+				}
+				piutangResults = append(piutangResults, item)
 			}
 		}
 	}
 
 	fmt.Printf("Jumlah data piutang yang ditemukan: %d\n", len(piutangResults))
 	fmt.Printf("Total piutang: %.2f\n", totalPiutang)
-
-	// Query untuk mendapatkan gabungan total rawat jalan dan piutang
-	var totalGabunganQuery string
-
-	if filterBy == "tgl_bayar" {
-		totalGabunganQuery = `
-			SELECT 
-				COALESCE(SUM(jalan.total), 0) as total_rawat_jalan,
-				COALESCE(SUM(piutang.total), 0) as total_piutang,
-				COALESCE(SUM(jalan.total), 0) + COALESCE(SUM(piutang.total), 0) as total_pendapatan
-			FROM
-			(
-				-- Subquery untuk total rawat jalan dengan filter tgl_bayar
-				SELECT 
-					SUM(detail_nota_jalan.besar_bayar) as total
-				FROM
-					reg_periksa
-				INNER JOIN pasien ON reg_periksa.no_rkm_medis = pasien.no_rkm_medis
-				INNER JOIN poliklinik ON reg_periksa.kd_poli = poliklinik.kd_poli
-				LEFT JOIN nota_jalan ON nota_jalan.no_rawat = reg_periksa.no_rawat
-				LEFT JOIN detail_nota_jalan ON detail_nota_jalan.no_rawat = reg_periksa.no_rawat
-				WHERE
-					nota_jalan.tanggal BETWEEN ? AND ?
-					AND reg_periksa.status_lanjut = 'Ralan'
-			) as jalan,
-			(
-				-- Subquery untuk total piutang dengan periode yang sama
-				SELECT 
-					SUM(CAST(detail_piutang_pasien.totalpiutang AS DECIMAL(15,2))) as total
-				FROM
-					reg_periksa
-					INNER JOIN piutang_pasien ON reg_periksa.no_rawat = piutang_pasien.no_rawat
-					INNER JOIN detail_piutang_pasien ON reg_periksa.no_rawat = detail_piutang_pasien.no_rawat
-				WHERE
-					piutang_pasien.tgl_piutang BETWEEN ? AND ?
-					AND reg_periksa.status_lanjut = 'Ralan'
-			) as piutang
-		`
-	} else if filterBy == "tgl_registrasi" {
-		totalGabunganQuery = `
-			SELECT 
-				COALESCE(SUM(jalan.total), 0) as total_rawat_jalan,
-				COALESCE(SUM(piutang.total), 0) as total_piutang,
-				COALESCE(SUM(jalan.total), 0) + COALESCE(SUM(piutang.total), 0) as total_pendapatan
-			FROM
-			(
-				-- Subquery untuk total rawat jalan dengan filter tgl_registrasi
-				SELECT 
-					SUM(detail_nota_jalan.besar_bayar) as total
-				FROM
-					reg_periksa
-				INNER JOIN pasien ON reg_periksa.no_rkm_medis = pasien.no_rkm_medis
-				INNER JOIN poliklinik ON reg_periksa.kd_poli = poliklinik.kd_poli
-				LEFT JOIN nota_jalan ON nota_jalan.no_rawat = reg_periksa.no_rawat
-				LEFT JOIN detail_nota_jalan ON detail_nota_jalan.no_rawat = reg_periksa.no_rawat
-				WHERE
-					reg_periksa.tgl_registrasi BETWEEN ? AND ?
-					AND reg_periksa.status_lanjut = 'Ralan'
-			) as jalan,
-			(
-				-- Subquery untuk total piutang dengan periode yang sama
-				SELECT 
-					SUM(CAST(detail_piutang_pasien.totalpiutang AS DECIMAL(15,2))) as total
-				FROM
-					reg_periksa
-					INNER JOIN piutang_pasien ON reg_periksa.no_rawat = piutang_pasien.no_rawat
-					INNER JOIN detail_piutang_pasien ON reg_periksa.no_rawat = detail_piutang_pasien.no_rawat
-				WHERE
-					piutang_pasien.tgl_piutang BETWEEN ? AND ?
-					AND reg_periksa.status_lanjut = 'Ralan'
-			) as piutang
-		`
-	} else {
-		// Default (both)
-		totalGabunganQuery = `
-			SELECT 
-				COALESCE(SUM(jalan.total), 0) as total_rawat_jalan,
-				COALESCE(SUM(piutang.total), 0) as total_piutang,
-				COALESCE(SUM(jalan.total), 0) + COALESCE(SUM(piutang.total), 0) as total_pendapatan
-			FROM
-			(
-				-- Subquery untuk total rawat jalan dengan filter both
-				SELECT 
-					SUM(detail_nota_jalan.besar_bayar) as total
-				FROM
-					reg_periksa
-				INNER JOIN pasien ON reg_periksa.no_rkm_medis = pasien.no_rkm_medis
-				INNER JOIN poliklinik ON reg_periksa.kd_poli = poliklinik.kd_poli
-				LEFT JOIN nota_jalan ON nota_jalan.no_rawat = reg_periksa.no_rawat
-				LEFT JOIN detail_nota_jalan ON detail_nota_jalan.no_rawat = reg_periksa.no_rawat
-				WHERE
-					(reg_periksa.tgl_registrasi BETWEEN ? AND ?)
-					OR (nota_jalan.tanggal BETWEEN ? AND ?)
-					AND reg_periksa.status_lanjut = 'Ralan'
-			) as jalan,
-			(
-				-- Subquery untuk total piutang dengan periode yang sama
-				SELECT 
-					SUM(CAST(detail_piutang_pasien.totalpiutang AS DECIMAL(15,2))) as total
-				FROM
-					reg_periksa
-					INNER JOIN piutang_pasien ON reg_periksa.no_rawat = piutang_pasien.no_rawat
-					INNER JOIN detail_piutang_pasien ON reg_periksa.no_rawat = detail_piutang_pasien.no_rawat
-				WHERE
-					piutang_pasien.tgl_piutang BETWEEN ? AND ?
-					AND reg_periksa.status_lanjut = 'Ralan'
-			) as piutang
-		`
-	}
-
-	// Log query yang akan dijalankan
-	fmt.Printf("Filter By: %s\n", filterBy)
-	fmt.Printf("Query gabungan yang akan dijalankan: %s\n", totalGabunganQuery)
-	fmt.Printf("Parameter: tanggal_awal=%s, tanggal_akhir=%s\n", tanggalAwal, tanggalAkhir)
-
-	// Eksekusi query total gabungan
-	var totalGabungan struct {
-		TotalRawatJalan float64 `json:"total_rawat_jalan"`
-		TotalPiutang    float64 `json:"total_piutang"`
-		TotalPendapatan float64 `json:"total_pendapatan"`
-	}
-
-	var totalGabunganErr error
-	if filterBy == "tgl_bayar" || filterBy == "tgl_registrasi" {
-		totalGabunganErr = db.Raw(totalGabunganQuery,
-			tanggalAwal, tanggalAkhir,
-			tanggalAwal, tanggalAkhir).Scan(&totalGabungan).Error
-	} else {
-		totalGabunganErr = db.Raw(totalGabunganQuery,
-			tanggalAwal, tanggalAkhir,
-			tanggalAwal, tanggalAkhir,
-			tanggalAwal, tanggalAkhir).Scan(&totalGabungan).Error
-	}
-
-	if totalGabunganErr != nil {
-		fmt.Printf("Gagal menjalankan query total gabungan: %v\n", totalGabunganErr)
-		// Tetap gunakan total yang dihitung dari query terpisah jika query gabungan gagal
-	} else {
-		// Jika query gabungan berhasil, gunakan nilai totalnya
-		totalBayarRawatJalan = totalGabungan.TotalRawatJalan
-		totalPiutang = totalGabungan.TotalPiutang
-
-		fmt.Printf("Total dari query gabungan - Rawat Jalan: %.2f, Piutang: %.2f, Total: %.2f\n",
-			totalGabungan.TotalRawatJalan, totalGabungan.TotalPiutang, totalGabungan.TotalPendapatan)
-	}
 
 	// Siapkan response
 	response := map[string]interface{}{

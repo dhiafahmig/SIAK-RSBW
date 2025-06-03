@@ -24,6 +24,8 @@ type LaporanRawatJalan struct {
 	NoNota        string    `json:"no_nota"`
 	TglBayar      time.Time `json:"tgl_bayar"`
 	BesarBayar    float64   `json:"besar_bayar"`
+	PngJawab      string    `json:"png_jawab"`
+	KdPj          string    `json:"kd_pj"`
 }
 
 // LaporanPiutangPasien adalah model untuk hasil query laporan piutang pasien
