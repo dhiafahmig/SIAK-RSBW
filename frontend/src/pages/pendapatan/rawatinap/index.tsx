@@ -108,8 +108,9 @@ const LaporanRawatInap: React.FC = () => {
         // Hitung total piutang untuk pasien ini
         const totalPiutangPasien = matchingPiutang.reduce((total, p) => total + p.totalpiutang, 0);
         
-        // Ambil PNG Jawab dan Nama Bayar dari data piutang pertama jika ada
-        const pngJawab = matchingPiutang.length > 0 ? matchingPiutang[0].png_jawab : '';
+        // Gunakan png_jawab dari data rawat inap jika tersedia, jika tidak gunakan dari piutang
+        // Item.png_jawab sudah tersedia dari backend berdasarkan perubahan yang telah dilakukan
+        const pngJawab = item.png_jawab || (matchingPiutang.length > 0 ? matchingPiutang[0].png_jawab : '-');
         const namaBayar = matchingPiutang.length > 0 ? matchingPiutang[0].nama_bayar : '';
         
         // Gabungkan data

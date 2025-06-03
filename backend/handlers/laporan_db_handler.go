@@ -87,13 +87,16 @@ func LaporanRawatInapHandler(w http.ResponseWriter, r *http.Request) {
 				kamar_inap.tgl_keluar,
 				nota_inap.no_nota,
 				nota_inap.tanggal,
-				detail_nota_inap.besar_bayar
+				SUM(detail_nota_inap.besar_bayar) as besar_bayar,
+				penjab.png_jawab,
+				reg_periksa.kd_pj
 			FROM
 				reg_periksa
 			INNER JOIN pasien ON reg_periksa.no_rkm_medis = pasien.no_rkm_medis
 			INNER JOIN kamar_inap ON kamar_inap.no_rawat = reg_periksa.no_rawat
 			LEFT JOIN nota_inap ON nota_inap.no_rawat = reg_periksa.no_rawat
 			LEFT JOIN detail_nota_inap ON detail_nota_inap.no_rawat = reg_periksa.no_rawat
+			INNER JOIN penjab ON reg_periksa.kd_pj = penjab.kd_pj
 			WHERE
 				kamar_inap.tgl_keluar BETWEEN ? AND ?
 				AND kamar_inap.tgl_keluar IS NOT NULL
@@ -110,13 +113,16 @@ func LaporanRawatInapHandler(w http.ResponseWriter, r *http.Request) {
 				kamar_inap.tgl_keluar,
 				nota_inap.no_nota,
 				nota_inap.tanggal,
-				detail_nota_inap.besar_bayar
+				SUM(detail_nota_inap.besar_bayar) as besar_bayar,
+				penjab.png_jawab,
+				reg_periksa.kd_pj
 			FROM
 				reg_periksa
 			INNER JOIN pasien ON reg_periksa.no_rkm_medis = pasien.no_rkm_medis
 			INNER JOIN kamar_inap ON kamar_inap.no_rawat = reg_periksa.no_rawat
 			LEFT JOIN nota_inap ON nota_inap.no_rawat = reg_periksa.no_rawat
 			LEFT JOIN detail_nota_inap ON detail_nota_inap.no_rawat = reg_periksa.no_rawat
+			INNER JOIN penjab ON reg_periksa.kd_pj = penjab.kd_pj
 			WHERE
 				kamar_inap.tgl_masuk BETWEEN ? AND ?
 			GROUP BY
@@ -133,13 +139,16 @@ func LaporanRawatInapHandler(w http.ResponseWriter, r *http.Request) {
 				kamar_inap.tgl_keluar,
 				nota_inap.no_nota,
 				nota_inap.tanggal,
-				detail_nota_inap.besar_bayar
+				SUM(detail_nota_inap.besar_bayar) as besar_bayar,
+				penjab.png_jawab,
+				reg_periksa.kd_pj
 			FROM
 				reg_periksa
 			INNER JOIN pasien ON reg_periksa.no_rkm_medis = pasien.no_rkm_medis
 			INNER JOIN kamar_inap ON kamar_inap.no_rawat = reg_periksa.no_rawat
 			LEFT JOIN nota_inap ON nota_inap.no_rawat = reg_periksa.no_rawat
 			LEFT JOIN detail_nota_inap ON detail_nota_inap.no_rawat = reg_periksa.no_rawat
+			INNER JOIN penjab ON reg_periksa.kd_pj = penjab.kd_pj
 			WHERE
 				(kamar_inap.tgl_masuk BETWEEN ? AND ?)
 				OR (kamar_inap.tgl_keluar BETWEEN ? AND ?)

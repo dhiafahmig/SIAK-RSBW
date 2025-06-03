@@ -202,7 +202,8 @@ const LaporanRawatJalan: React.FC = () => {
         const totalPiutangPasien = matchingPiutang.reduce((total, p) => total + p.totalpiutang, 0);
         
         // Ambil PNG Jawab dan Nama Bayar dari data piutang pertama jika ada
-        const pngJawab = matchingPiutang.length > 0 ? matchingPiutang[0].png_jawab : '';
+        // Jika tidak ada data piutang, gunakan png_jawab dari data rawat jalan (item.png_jawab)
+        const pngJawab = matchingPiutang.length > 0 ? matchingPiutang[0].png_jawab : item.png_jawab;
         const namaBayar = matchingPiutang.length > 0 ? matchingPiutang[0].nama_bayar : '';
         
         // Gabungkan data

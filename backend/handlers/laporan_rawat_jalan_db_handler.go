@@ -86,11 +86,11 @@ func RawatJalanHandler(w http.ResponseWriter, r *http.Request) {
 				poliklinik.nm_poli,
 				nota_jalan.no_nota,
 				nota_jalan.tanggal as tgl_bayar,
-				COALESCE(detail_nota_jalan.besar_bayar, 0) as besar_bayar,
+				SUM(detail_nota_jalan.besar_bayar) as besar_bayar,
 				penjab.png_jawab,
 				reg_periksa.kd_pj
 			FROM
-				reg_periksa USE INDEX (status_lanjut)
+				reg_periksa
 			INNER JOIN pasien ON reg_periksa.no_rkm_medis = pasien.no_rkm_medis
 			INNER JOIN poliklinik ON reg_periksa.kd_poli = poliklinik.kd_poli
 			INNER JOIN penjab ON reg_periksa.kd_pj = penjab.kd_pj
@@ -99,7 +99,9 @@ func RawatJalanHandler(w http.ResponseWriter, r *http.Request) {
 			WHERE
 				nota_jalan.tanggal BETWEEN ? AND ?
 				AND reg_periksa.status_lanjut = 'Ralan'
-			ORDER BY detail_nota_jalan.besar_bayar DESC
+			GROUP BY
+				reg_periksa.no_rawat
+			ORDER BY SUM(detail_nota_jalan.besar_bayar) DESC
 			LIMIT 300
 		`
 	} else if filterBy == "tgl_registrasi" {
@@ -112,11 +114,11 @@ func RawatJalanHandler(w http.ResponseWriter, r *http.Request) {
 				poliklinik.nm_poli,
 				nota_jalan.no_nota,
 				nota_jalan.tanggal as tgl_bayar,
-				COALESCE(detail_nota_jalan.besar_bayar, 0) as besar_bayar,
+				SUM(detail_nota_jalan.besar_bayar) as besar_bayar,
 				penjab.png_jawab,
 				reg_periksa.kd_pj
 			FROM
-				reg_periksa USE INDEX (tgl_registrasi, status_lanjut)
+				reg_periksa
 			INNER JOIN pasien ON reg_periksa.no_rkm_medis = pasien.no_rkm_medis
 			INNER JOIN poliklinik ON reg_periksa.kd_poli = poliklinik.kd_poli
 			INNER JOIN penjab ON reg_periksa.kd_pj = penjab.kd_pj
@@ -125,7 +127,9 @@ func RawatJalanHandler(w http.ResponseWriter, r *http.Request) {
 			WHERE
 				reg_periksa.tgl_registrasi BETWEEN ? AND ?
 				AND reg_periksa.status_lanjut = 'Ralan'
-			ORDER BY penjab.png_jawab LIKE '%BPJS%' DESC, detail_nota_jalan.besar_bayar DESC
+			GROUP BY
+				reg_periksa.no_rawat
+			ORDER BY penjab.png_jawab LIKE '%BPJS%' DESC, SUM(detail_nota_jalan.besar_bayar) DESC
 			LIMIT 300
 		`
 	} else {
@@ -139,11 +143,11 @@ func RawatJalanHandler(w http.ResponseWriter, r *http.Request) {
 				poliklinik.nm_poli,
 				nota_jalan.no_nota,
 				nota_jalan.tanggal as tgl_bayar,
-				COALESCE(detail_nota_jalan.besar_bayar, 0) as besar_bayar,
+				SUM(detail_nota_jalan.besar_bayar) as besar_bayar,
 				penjab.png_jawab,
 				reg_periksa.kd_pj
 			FROM
-				reg_periksa USE INDEX (tgl_registrasi, status_lanjut)
+				reg_periksa
 			INNER JOIN pasien ON reg_periksa.no_rkm_medis = pasien.no_rkm_medis
 			INNER JOIN poliklinik ON reg_periksa.kd_poli = poliklinik.kd_poli
 			INNER JOIN penjab ON reg_periksa.kd_pj = penjab.kd_pj
@@ -152,7 +156,9 @@ func RawatJalanHandler(w http.ResponseWriter, r *http.Request) {
 			WHERE
 				reg_periksa.tgl_registrasi BETWEEN ? AND ?
 				AND reg_periksa.status_lanjut = 'Ralan'
-			ORDER BY penjab.png_jawab LIKE '%BPJS%' DESC, detail_nota_jalan.besar_bayar DESC
+			GROUP BY
+				reg_periksa.no_rawat
+			ORDER BY penjab.png_jawab LIKE '%BPJS%' DESC, SUM(detail_nota_jalan.besar_bayar) DESC
 			LIMIT 300
 		`
 	}
@@ -201,7 +207,7 @@ func RawatJalanHandler(w http.ResponseWriter, r *http.Request) {
 	if filterBy == "tgl_bayar" {
 		totalQuery = `
 			SELECT COALESCE(SUM(detail_nota_jalan.besar_bayar), 0) as total
-			FROM reg_periksa USE INDEX (status_lanjut)
+			FROM reg_periksa
 			INNER JOIN nota_jalan ON nota_jalan.no_rawat = reg_periksa.no_rawat
 			LEFT JOIN detail_nota_jalan ON detail_nota_jalan.no_rawat = reg_periksa.no_rawat
 			WHERE nota_jalan.tanggal BETWEEN ? AND ?
@@ -210,7 +216,7 @@ func RawatJalanHandler(w http.ResponseWriter, r *http.Request) {
 	} else if filterBy == "tgl_registrasi" {
 		totalQuery = `
 			SELECT COALESCE(SUM(detail_nota_jalan.besar_bayar), 0) as total
-			FROM reg_periksa USE INDEX (tgl_registrasi, status_lanjut)
+			FROM reg_periksa
 			LEFT JOIN nota_jalan ON nota_jalan.no_rawat = reg_periksa.no_rawat
 			LEFT JOIN detail_nota_jalan ON detail_nota_jalan.no_rawat = reg_periksa.no_rawat
 			WHERE reg_periksa.tgl_registrasi BETWEEN ? AND ?
@@ -219,7 +225,7 @@ func RawatJalanHandler(w http.ResponseWriter, r *http.Request) {
 	} else {
 		totalQuery = `
 			SELECT COALESCE(SUM(detail_nota_jalan.besar_bayar), 0) as total
-			FROM reg_periksa USE INDEX (tgl_registrasi, status_lanjut)
+			FROM reg_periksa
 			LEFT JOIN nota_jalan ON nota_jalan.no_rawat = reg_periksa.no_rawat
 			LEFT JOIN detail_nota_jalan ON detail_nota_jalan.no_rawat = reg_periksa.no_rawat
 			WHERE reg_periksa.tgl_registrasi BETWEEN ? AND ?
@@ -255,7 +261,7 @@ func RawatJalanHandler(w http.ResponseWriter, r *http.Request) {
 	// Query SQL untuk total piutang (tanpa detail untuk kecepatan)
 	piutangTotalQuery := `
 		SELECT COALESCE(SUM(CAST(detail_piutang_pasien.totalpiutang AS DECIMAL(15,2))), 0) as total
-		FROM reg_periksa USE INDEX (status_lanjut)
+		FROM reg_periksa
 		INNER JOIN piutang_pasien ON reg_periksa.no_rawat = piutang_pasien.no_rawat
 		INNER JOIN detail_piutang_pasien ON reg_periksa.no_rawat = detail_piutang_pasien.no_rawat
 		WHERE piutang_pasien.tgl_piutang BETWEEN ? AND ?
@@ -283,7 +289,7 @@ func RawatJalanHandler(w http.ResponseWriter, r *http.Request) {
 				detail_piutang_pasien.nama_bayar AS nama_bayar, 
 				CAST(detail_piutang_pasien.totalpiutang AS DECIMAL(15,2)) AS totalpiutang
 			FROM
-				reg_periksa USE INDEX (status_lanjut)
+				reg_periksa
 				INNER JOIN piutang_pasien ON reg_periksa.no_rawat = piutang_pasien.no_rawat
 				INNER JOIN detail_piutang_pasien ON reg_periksa.no_rawat = detail_piutang_pasien.no_rawat
 				INNER JOIN penjab ON detail_piutang_pasien.kd_pj = penjab.kd_pj
