@@ -26,6 +26,11 @@ func RawatJalanHandler(w http.ResponseWriter, r *http.Request) {
 	filterBy := r.URL.Query().Get("filter_by")
 	includePiutang := r.URL.Query().Get("include_piutang") // Parameter baru untuk mengontrol penggabungan piutang
 
+	// Default includePiutang ke false jika tidak ada
+	if includePiutang == "" {
+		includePiutang = "false"
+	}
+
 	// Log parameter untuk debugging
 	fmt.Printf("Parameter filter rawat jalan: tanggal_awal=%s, tanggal_akhir=%s, filter_by=%s, include_piutang=%s\n",
 		tanggalAwal, tanggalAkhir, filterBy, includePiutang)
@@ -258,29 +263,29 @@ func RawatJalanHandler(w http.ResponseWriter, r *http.Request) {
 	var piutangResults []models.LaporanPiutangPasien
 	var totalPiutang float64
 
-	// Query SQL untuk total piutang (tanpa detail untuk kecepatan)
-	piutangTotalQuery := `
-		SELECT COALESCE(SUM(CAST(detail_piutang_pasien.totalpiutang AS DECIMAL(15,2))), 0) as total
-		FROM reg_periksa
-		INNER JOIN piutang_pasien ON reg_periksa.no_rawat = piutang_pasien.no_rawat
-		INNER JOIN detail_piutang_pasien ON reg_periksa.no_rawat = detail_piutang_pasien.no_rawat
-		WHERE piutang_pasien.tgl_piutang BETWEEN ? AND ?
-		AND reg_periksa.status_lanjut = 'Ralan'
-	`
-
-	var piutangTotalResult struct {
-		Total float64
-	}
-
-	piutangTotalErr := db.Raw(piutangTotalQuery, tanggalAwal, tanggalAkhir).Scan(&piutangTotalResult).Error
-	if piutangTotalErr == nil {
-		totalPiutang = piutangTotalResult.Total
-	} else {
-		fmt.Printf("Gagal menjalankan query total piutang: %v\n", piutangTotalErr)
-	}
-
-	// Hanya ambil detail piutang jika includePiutang = true
+	// Hanya jalankan query piutang jika includePiutang = true
 	if includePiutang == "true" {
+		// Query SQL untuk total piutang (tanpa detail untuk kecepatan)
+		piutangTotalQuery := `
+			SELECT COALESCE(SUM(CAST(detail_piutang_pasien.totalpiutang AS DECIMAL(15,2))), 0) as total
+			FROM reg_periksa
+			INNER JOIN piutang_pasien ON reg_periksa.no_rawat = piutang_pasien.no_rawat
+			INNER JOIN detail_piutang_pasien ON reg_periksa.no_rawat = detail_piutang_pasien.no_rawat
+			WHERE piutang_pasien.tgl_piutang BETWEEN ? AND ?
+			AND reg_periksa.status_lanjut = 'Ralan'
+		`
+
+		var piutangTotalResult struct {
+			Total float64
+		}
+
+		piutangTotalErr := db.Raw(piutangTotalQuery, tanggalAwal, tanggalAkhir).Scan(&piutangTotalResult).Error
+		if piutangTotalErr == nil {
+			totalPiutang = piutangTotalResult.Total
+		} else {
+			fmt.Printf("Gagal menjalankan query total piutang: %v\n", piutangTotalErr)
+		}
+
 		// Query SQL untuk piutang pasien dengan alias yang jelas untuk setiap kolom
 		piutangQuery := `
 			SELECT
@@ -349,10 +354,10 @@ func RawatJalanHandler(w http.ResponseWriter, r *http.Request) {
 				piutangResults = append(piutangResults, item)
 			}
 		}
-	}
 
-	fmt.Printf("Jumlah data piutang yang ditemukan: %d\n", len(piutangResults))
-	fmt.Printf("Total piutang: %.2f\n", totalPiutang)
+		fmt.Printf("Jumlah data piutang yang ditemukan: %d\n", len(piutangResults))
+		fmt.Printf("Total piutang: %.2f\n", totalPiutang)
+	}
 
 	// Siapkan response
 	response := map[string]interface{}{
